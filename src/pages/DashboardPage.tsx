@@ -13,6 +13,38 @@ function getStatusClass(status: "Uploading" | "Indexing" | "Ready") {
     return "status-pill status-uploading";
 }
 
+function getEventCardStatus(eventItem: {
+    status: "Uploading" | "Indexing" | "Ready";
+    photos: { id: number; url: string }[];
+}) {
+    if (eventItem.photos.length === 0) {
+        return {
+            label: "No Photos",
+            className: "status-pill border border-[#3a4a67] bg-[#162137] text-[#b6c5e3]",
+        };
+    }
+
+    return {
+        label: eventItem.status,
+        className: getStatusClass(eventItem.status),
+    };
+}
+
+const sharedDummyCards = [
+    {
+        id: "dummy-shared-1",
+        name: "Nisha & Rohan Reception",
+        photographer: "Amit Verma",
+        photos: 186,
+    },
+    {
+        id: "dummy-shared-2",
+        name: "Startup Summit 2025",
+        photographer: "Neha Kapoor",
+        photos: 124,
+    },
+];
+
 export function DashboardPage() {
     const navigate = useNavigate();
     const { currentUser, getMyEvents, getSharedEvents, createEvent, logout } = useAppContext();
@@ -106,20 +138,42 @@ export function DashboardPage() {
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {myEvents.map((eventItem) => (
+                            (() => {
+                                const cardStatus = getEventCardStatus(eventItem);
+
+                                return (
                             <Link
                                 key={eventItem.id}
                                 to={`/events/${eventItem.id}`}
-                                className="card block p-4"
+                                className="card group block p-5"
                             >
-                                <h2 className="font-semibold text-[#eef3ff]">{eventItem.name}</h2>
-                                <p className="mt-2 text-sm muted">Date: {eventItem.date}</p>
-                                <p className="text-sm muted">Type: {eventItem.type}</p>
-                                <p className="mt-3 text-sm text-[#d7e2fa]">Photos: {eventItem.photos.length}</p>
-                                <p className="text-sm text-[#d7e2fa]">Guests: {eventItem.guests.length}</p>
-                                <span className={`mt-3 inline-flex ${getStatusClass(eventItem.status)}`}>
-                                    {eventItem.status}
-                                </span>
+                                <div className="flex items-start justify-between gap-3">
+                                    <h2 className="line-clamp-2 font-semibold text-[#eef3ff] group-hover:text-white">
+                                        {eventItem.name}
+                                    </h2>
+                                    <span className={cardStatus.className}>{cardStatus.label}</span>
+                                </div>
+                                <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg border border-[#2b3954] bg-[#101a2b] p-3 text-xs">
+                                    <div>
+                                        <p className="muted">Date</p>
+                                        <p className="mt-1 text-[#d7e2fa]">{eventItem.date}</p>
+                                    </div>
+                                    <div>
+                                        <p className="muted">Type</p>
+                                        <p className="mt-1 text-[#d7e2fa]">{eventItem.type}</p>
+                                    </div>
+                                    <div>
+                                        <p className="muted">Photos</p>
+                                        <p className="mt-1 text-[#d7e2fa]">{eventItem.photos.length}</p>
+                                    </div>
+                                    <div>
+                                        <p className="muted">Guests</p>
+                                        <p className="mt-1 text-[#d7e2fa]">{eventItem.guests.length}</p>
+                                    </div>
+                                </div>
                             </Link>
+                                );
+                            })()
                         ))}
                     </div>
                     {myEvents.length === 0 ? (
@@ -138,21 +192,50 @@ export function DashboardPage() {
                     ) : null}
                 </section>
             ) : (
-                <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <section className="mt-4 space-y-4">
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {sharedEvents.map((eventItem) => (
-                        <article key={eventItem.id} className="card p-4">
-                            <h2 className="font-semibold text-[#eef3ff]">{eventItem.name}</h2>
-                            <p className="mt-2 text-sm muted">Photographer: Rahul Sharma</p>
-                            <p className="text-sm text-[#d7e2fa]">Photos: {eventItem.photos.length}</p>
-                            <Link
-                                to={`/events/${eventItem.id}/guest`}
-                                className="btn-primary mt-4 inline-block px-4 py-2 text-sm"
-                            >
-                                View
-                            </Link>
-                        </article>
+                            <article key={eventItem.id} className="card p-5">
+                                <h2 className="font-semibold text-[#eef3ff]">{eventItem.name}</h2>
+                                <div className="mt-3 rounded-lg border border-[#2b3954] bg-[#101a2b] p-3 text-xs">
+                                    <p className="muted">Photographer</p>
+                                    <p className="mt-1 text-sm text-[#d7e2fa]">Rahul Sharma</p>
+                                    <p className="mt-3 muted">Photos</p>
+                                    <p className="mt-1 text-sm text-[#d7e2fa]">{eventItem.photos.length}</p>
+                                </div>
+                                <Link
+                                    to={`/events/${eventItem.id}/guest`}
+                                    className="btn-primary mt-4 inline-block px-4 py-2 text-sm"
+                                >
+                                    View
+                                </Link>
+                            </article>
                     ))}
-                    {sharedEvents.length === 0 ? (
+                    </div>
+
+                    <div>
+                        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[#93a4c4]">
+                            Suggested Shared Events
+                        </p>
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {sharedDummyCards.map((card) => (
+                                <article key={card.id} className="card p-5">
+                                    <h2 className="font-semibold text-[#eef3ff]">{card.name}</h2>
+                                    <div className="mt-3 rounded-lg border border-[#2b3954] bg-[#101a2b] p-3 text-xs">
+                                        <p className="muted">Photographer</p>
+                                        <p className="mt-1 text-sm text-[#d7e2fa]">{card.photographer}</p>
+                                        <p className="mt-3 muted">Photos</p>
+                                        <p className="mt-1 text-sm text-[#d7e2fa]">{card.photos}</p>
+                                    </div>
+                                    <button type="button" className="btn-secondary mt-4 px-4 py-2 text-sm">
+                                        View
+                                    </button>
+                                </article>
+                            ))}
+                        </div>
+                    </div>
+
+                    {sharedEvents.length === 0 && sharedDummyCards.length === 0 ? (
                         <div className="card col-span-full p-10 text-center">
                             <p className="text-3xl">🔗</p>
                             <p className="mt-2 text-base font-medium">No shared events yet</p>
