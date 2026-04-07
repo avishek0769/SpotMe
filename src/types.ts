@@ -19,11 +19,18 @@ export interface Photo {
     url: string;
 }
 
+export interface MatchingUpload {
+    id: number;
+    url: string;
+    uploadedAt: string;
+}
+
 export interface EventGuest {
     name: string;
     accessedAt: string;
     collectionPhotoIds: number[];
     lastSearchedAt: string | null;
+    matchingUploads: MatchingUpload[];
 }
 
 export interface EventData {

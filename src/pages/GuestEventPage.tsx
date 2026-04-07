@@ -17,7 +17,13 @@ function toDaysAgoText(iso: string | null) {
 
 export function GuestEventPage() {
     const { id } = useParams();
-    const { events, currentUser, upsertGuestCollection, removeGuestCollectionPhotos } = useAppContext();
+    const {
+        events,
+        currentUser,
+        upsertGuestCollection,
+        removeGuestCollectionPhotos,
+        setGuestMatchingUploads,
+    } = useAppContext();
 
     const eventItem = useMemo(() => events.find((eventData) => eventData.id === id), [events, id]);
 
@@ -50,6 +56,10 @@ export function GuestEventPage() {
         return <Navigate to="/" replace />;
     }
 
+    if (currentUser) {
+        return <Navigate to={`/events/${id}/guest/collection`} replace />;
+    }
+
     const guestEvent = eventItem;
 
     const browsePhotos = guestEvent.photos.slice((browsePage - 1) * PAGE_SIZE, browsePage * PAGE_SIZE);
@@ -68,6 +78,17 @@ export function GuestEventPage() {
             const normalizedName = guestName.trim();
             const existingIds = guestRecord?.collectionPhotoIds ?? [];
             const pool = guestEvent.photos.filter((photo) => !existingIds.includes(photo.id));
+
+            const selfieCount = 1 + Math.floor(Math.random() * 3);
+            const matchingUploads = Array.from({ length: selfieCount }, (_, index) => {
+                const seed = Date.now() + index;
+                return {
+                    id: seed,
+                    url: `https://picsum.photos/seed/upload-${seed}/400/300`,
+                    uploadedAt: new Date().toISOString(),
+                };
+            });
+            setGuestMatchingUploads(guestEvent.id, normalizedName, matchingUploads);
 
             if (existingIds.length > 0) {
                 const newPhotos = pool.slice(0, 3);

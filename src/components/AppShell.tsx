@@ -29,19 +29,17 @@ export function AppShell({ children }: AppShellProps) {
                         >
                             Home
                         </Link>
-                        {currentUser ? (
-                            <Link
-                                to="/dashboard"
-                                className={`rounded-md px-3 py-2 ${
-                                    location.pathname.startsWith("/dashboard") ||
-                                    location.pathname.startsWith("/events/")
-                                        ? "bg-[#1b2841] text-[#f5f8ff]"
-                                        : "text-[#9aa8c3]"
-                                }`}
-                            >
-                                Dashboard
-                            </Link>
-                        ) : null}
+                        <Link
+                            to="/dashboard"
+                            className={`rounded-md px-3 py-2 ${
+                                location.pathname.startsWith("/dashboard") ||
+                                location.pathname.startsWith("/events/")
+                                    ? "bg-[#1b2841] text-[#f5f8ff]"
+                                    : "text-[#9aa8c3]"
+                            }`}
+                        >
+                            Dashboard
+                        </Link>
                         {!currentUser && !onAuthRoute ? (
                             <Link to="/login" className="btn-secondary px-3 py-2">
                                 Log In

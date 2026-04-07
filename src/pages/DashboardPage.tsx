@@ -33,12 +33,14 @@ function getEventCardStatus(eventItem: {
 const sharedDummyCards = [
     {
         id: "dummy-shared-1",
+        eventId: "evt-1",
         name: "Nisha & Rohan Reception",
         photographer: "Amit Verma",
         photos: 186,
     },
     {
         id: "dummy-shared-2",
+        eventId: "evt-2",
         name: "Startup Summit 2025",
         photographer: "Neha Kapoor",
         photos: 124,
@@ -204,10 +206,10 @@ export function DashboardPage() {
                                     <p className="mt-1 text-sm text-[#d7e2fa]">{eventItem.photos.length}</p>
                                 </div>
                                 <Link
-                                    to={`/events/${eventItem.id}/guest`}
+                                    to={`/events/${eventItem.id}/guest/collection`}
                                     className="btn-primary mt-4 inline-block px-4 py-2 text-sm"
                                 >
-                                    View
+                                    View All
                                 </Link>
                             </article>
                     ))}
@@ -227,9 +229,12 @@ export function DashboardPage() {
                                         <p className="mt-3 muted">Photos</p>
                                         <p className="mt-1 text-sm text-[#d7e2fa]">{card.photos}</p>
                                     </div>
-                                    <button type="button" className="btn-secondary mt-4 px-4 py-2 text-sm">
-                                        View
-                                    </button>
+                                    <Link
+                                        to={`/events/${card.eventId}/guest/collection`}
+                                        className="btn-secondary mt-4 inline-block px-4 py-2 text-sm"
+                                    >
+                                        View All
+                                    </Link>
                                 </article>
                             ))}
                         </div>

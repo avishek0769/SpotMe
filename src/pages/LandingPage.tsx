@@ -20,6 +20,9 @@ export function LandingPage() {
                 </p>
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                    <Link to="/dashboard" className="btn-primary px-5 py-3 text-center text-sm">
+                        Go to Dashboard
+                    </Link>
                     <Link to="/signup" className="btn-primary px-5 py-3 text-center text-sm">
                         Sign Up
                     </Link>

@@ -7,6 +7,7 @@ import { AuthPage } from "./pages/AuthPage.tsx";
 import { DashboardPage } from "./pages/DashboardPage.tsx";
 import { EventManagementPage } from "./pages/EventManagementPage.tsx";
 import { GuestEventPage } from "./pages/GuestEventPage.tsx";
+import { GuestCollectionPage } from "./pages/GuestCollectionPage.tsx";
 import { LandingPage } from "./pages/LandingPage.tsx";
 import { NotFoundPage } from "./pages/NotFoundPage.tsx";
 
@@ -35,6 +36,7 @@ function App() {
                         }
                     />
                     <Route path="/events/:id/guest" element={<GuestEventPage />} />
+                    <Route path="/events/:id/guest/collection" element={<GuestCollectionPage />} />
                     <Route path="*" element={<NotFoundPage />} />
                     <Route path="/home" element={<Navigate to="/" replace />} />
                 </Routes>

@@ -7,7 +7,7 @@ import {
     useState,
     type ReactNode,
 } from "react";
-import type { AppUser, EventData, EventGuest, EventStatus, EventType } from "../types";
+import type { AppUser, EventData, EventGuest, EventStatus, EventType, MatchingUpload } from "../types";
 
 interface CreateEventPayload {
     name: string;
@@ -34,6 +34,7 @@ interface AppContextValue {
         photoIds: number[],
         options?: { merge?: boolean; updateSearchedAt?: boolean },
     ) => void;
+    setGuestMatchingUploads: (eventId: string, guestName: string, uploads: MatchingUpload[]) => void;
     removeGuestCollectionPhotos: (eventId: string, guestName: string, photoIds: number[]) => void;
     getMyEvents: () => EventData[];
     getSharedEvents: () => EventData[];
@@ -55,6 +56,16 @@ const createPhotos = (startSeed: number, count: number) =>
         return {
             id,
             url: `https://picsum.photos/seed/${id}/400/300`,
+        };
+    });
+
+const createMatchingUploads = (startSeed: number, count: number): MatchingUpload[] =>
+    Array.from({ length: count }, (_, index) => {
+        const id = startSeed + index;
+        return {
+            id,
+            url: `https://picsum.photos/seed/match-${id}/400/300`,
+            uploadedAt: nowIso(),
         };
     });
 
@@ -93,18 +104,21 @@ const initialEvents: EventData[] = [
                 accessedAt: daysAgoIso(2),
                 collectionPhotoIds: createPhotos(1000, 14).map((p) => p.id),
                 lastSearchedAt: daysAgoIso(2),
+                matchingUploads: createMatchingUploads(9000, 2),
             },
             {
                 name: "Karan",
                 accessedAt: daysAgoIso(5),
                 collectionPhotoIds: createPhotos(1014, 9).map((p) => p.id),
                 lastSearchedAt: daysAgoIso(5),
+                matchingUploads: createMatchingUploads(9100, 1),
             },
             {
                 name: "Meera",
                 accessedAt: nowIso(),
                 collectionPhotoIds: [],
                 lastSearchedAt: null,
+                matchingUploads: [],
             },
         ],
     },
@@ -125,6 +139,7 @@ const initialEvents: EventData[] = [
                 accessedAt: daysAgoIso(3),
                 collectionPhotoIds: createPhotos(5000, 6).map((p) => p.id),
                 lastSearchedAt: daysAgoIso(3),
+                matchingUploads: createMatchingUploads(9200, 1),
             },
         ],
     },
@@ -133,7 +148,7 @@ const initialEvents: EventData[] = [
 export function AppProvider({ children }: { children: ReactNode }) {
     const [users, setUsers] = useState<AppUser[]>(initialUsers);
     const [events, setEvents] = useState<EventData[]>(initialEvents);
-    const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
+    const [currentUser, setCurrentUser] = useState<AppUser | null>(initialUsers[0]);
 
     const login = useCallback(
         (email: string, password: string) =>
@@ -301,6 +316,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                                   accessedAt: nowIso(),
                                   collectionPhotoIds: photoIds,
                                   lastSearchedAt: options?.updateSearchedAt ? nowIso() : null,
+                                    matchingUploads: [],
                               };
 
                     if (targetIdx >= 0) {
@@ -312,6 +328,52 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     return {
                         ...eventItem,
                         guests: mergedGuests,
+                    };
+                }),
+            );
+        },
+        [],
+    );
+
+    const setGuestMatchingUploads = useCallback(
+        (eventId: string, guestName: string, uploads: MatchingUpload[]) => {
+            setEvents((prev) =>
+                prev.map((eventItem) => {
+                    if (eventItem.id !== eventId) {
+                        return eventItem;
+                    }
+
+                    const idx = eventItem.guests.findIndex(
+                        (guest) => guest.name.toLowerCase() === guestName.toLowerCase(),
+                    );
+
+                    if (idx < 0) {
+                        return {
+                            ...eventItem,
+                            guests: [
+                                ...eventItem.guests,
+                                {
+                                    name: guestName,
+                                    accessedAt: nowIso(),
+                                    collectionPhotoIds: [],
+                                    lastSearchedAt: nowIso(),
+                                    matchingUploads: uploads,
+                                },
+                            ],
+                        };
+                    }
+
+                    return {
+                        ...eventItem,
+                        guests: eventItem.guests.map((guest, guestIdx) =>
+                            guestIdx === idx
+                                ? {
+                                      ...guest,
+                                      accessedAt: nowIso(),
+                                      matchingUploads: uploads,
+                                  }
+                                : guest,
+                        ),
                     };
                 }),
             );
@@ -377,6 +439,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             setEventAccessLevel,
             addPhotosToEvent,
             upsertGuestCollection,
+            setGuestMatchingUploads,
             removeGuestCollectionPhotos,
             getMyEvents,
             getSharedEvents,
@@ -395,6 +458,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             setEventAccessLevel,
             addPhotosToEvent,
             upsertGuestCollection,
+            setGuestMatchingUploads,
             removeGuestCollectionPhotos,
             getMyEvents,
             getSharedEvents,
