@@ -3,6 +3,7 @@ import {
     createContext,
     useCallback,
     useContext,
+    useEffect,
     useMemo,
     useState,
     type ReactNode,
@@ -41,6 +42,9 @@ interface AppContextValue {
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
+
+const LOCAL_USERS_KEY = "spotme.users";
+const LOCAL_SESSION_KEY = "spotme.session";
 
 const nowIso = () => new Date().toISOString();
 
@@ -85,6 +89,32 @@ const initialUsers: AppUser[] = [
         role: "guest",
     },
 ];
+
+function loadUsersFromStorage(): AppUser[] {
+    const raw = localStorage.getItem(LOCAL_USERS_KEY);
+    if (!raw) {
+        return initialUsers;
+    }
+    try {
+        const parsed = JSON.parse(raw) as AppUser[];
+        return Array.isArray(parsed) && parsed.length > 0 ? parsed : initialUsers;
+    } catch {
+        return initialUsers;
+    }
+}
+
+function loadSessionFromStorage(): AppUser | null {
+    const raw = localStorage.getItem(LOCAL_SESSION_KEY);
+    if (!raw) {
+        return null;
+    }
+    try {
+        const parsed = JSON.parse(raw) as AppUser;
+        return parsed ?? null;
+    } catch {
+        return null;
+    }
+}
 
 const initialEvents: EventData[] = [
     {
@@ -146,16 +176,29 @@ const initialEvents: EventData[] = [
 ];
 
 export function AppProvider({ children }: { children: ReactNode }) {
-    const [users, setUsers] = useState<AppUser[]>(initialUsers);
+    const [users, setUsers] = useState<AppUser[]>(() => loadUsersFromStorage());
     const [events, setEvents] = useState<EventData[]>(initialEvents);
-    const [currentUser, setCurrentUser] = useState<AppUser | null>(initialUsers[0]);
+    const [currentUser, setCurrentUser] = useState<AppUser | null>(() => loadSessionFromStorage());
+
+    useEffect(() => {
+        localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+    }, [users]);
+
+    useEffect(() => {
+        if (currentUser) {
+            localStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(currentUser));
+            return;
+        }
+        localStorage.removeItem(LOCAL_SESSION_KEY);
+    }, [currentUser]);
 
     const login = useCallback(
         (email: string, password: string) =>
             new Promise<boolean>((resolve) => {
                 setTimeout(() => {
+                    const normalizedEmail = email.trim().toLowerCase();
                     const found = users.find(
-                        (user) => user.email === email.trim() && user.password === password,
+                        (user) => user.email.toLowerCase() === normalizedEmail && user.password === password,
                     );
                     if (!found) {
                         resolve(false);
@@ -194,6 +237,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
 
     const logout = useCallback(() => {
+        localStorage.removeItem(LOCAL_SESSION_KEY);
         setCurrentUser(null);
     }, []);
 

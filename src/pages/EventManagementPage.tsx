@@ -53,6 +53,7 @@ export function EventManagementPage() {
     const [expandedGuestName, setExpandedGuestName] = useState<string | null>(null);
     const [settingsName, setSettingsName] = useState(eventItem?.name ?? "");
     const [settingsExpiry, setSettingsExpiry] = useState(eventItem?.expiryDate ?? "");
+    const [copiedLink, setCopiedLink] = useState(false);
 
     const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -77,6 +78,10 @@ export function EventManagementPage() {
     }
 
     const managedEvent = eventItem;
+    const guestLink =
+        typeof window !== "undefined"
+            ? `${window.location.origin}/events/${managedEvent.id}/guest`
+            : `/events/${managedEvent.id}/guest`;
 
     if (managedEvent.photographerId !== currentUser?.id) {
         return (
@@ -190,12 +195,13 @@ export function EventManagementPage() {
     }
 
     function copyGuestLink() {
-        const shareLink = `spotme.app/events/${managedEvent.id}/guest`;
         if (navigator.clipboard && window.isSecureContext) {
-            void navigator.clipboard.writeText(shareLink);
+            void navigator.clipboard.writeText(guestLink);
+            setCopiedLink(true);
+            window.setTimeout(() => setCopiedLink(false), 1500);
             return;
         }
-        window.prompt("Copy this link:", shareLink);
+        window.prompt("Copy this link:", guestLink);
     }
 
     function saveSettings() {
@@ -219,45 +225,80 @@ export function EventManagementPage() {
 
     return (
         <div className="page-wrap">
-            <Link to="/dashboard" className="text-sm text-[#9eb7ff] hover:text-[#c8d8ff]">
-                Back to Dashboard
-            </Link>
+            <div className="mb-3 flex items-center justify-between gap-3">
+                <Link to="/dashboard" className="text-sm text-[#9eb7ff] hover:text-[#c8d8ff]">
+                    Back to Dashboard
+                </Link>
+                <span className="rounded-full border border-[#334563] bg-[#121d32] px-3 py-1 text-xs text-[#9fb2d3]">
+                    Event ID: {managedEvent.id}
+                </span>
+            </div>
 
-            <header className="card mt-3 p-5">
-                <h1 className="text-2xl font-bold tracking-tight">{managedEvent.name}</h1>
-                <p className="mt-2 text-sm muted">Date: {managedEvent.date}</p>
-                <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                    <span className="status-pill border border-[#384969] bg-[#1a2640] text-[#ced9ef]">{managedEvent.type}</span>
-                    <span className={getStatusClass(managedEvent.status)}>{managedEvent.status}</span>
+            <header className="card p-5 sm:p-6">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{managedEvent.name}</h1>
+                        <p className="mt-2 text-sm muted">Date: {managedEvent.date}</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="status-pill border border-[#384969] bg-[#1a2640] text-[#ced9ef]">
+                            {managedEvent.type}
+                        </span>
+                        <span className={getStatusClass(managedEvent.status)}>{managedEvent.status}</span>
+                    </div>
+                </div>
+
+                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                    <div className="rounded-lg border border-[#2e3b56] bg-[#111a2c] p-3">
+                        <p className="text-xs muted">Total Photos</p>
+                        <p className="mt-1 text-lg font-semibold text-[#e7efff]">{managedEvent.photos.length}</p>
+                    </div>
+                    <div className="rounded-lg border border-[#2e3b56] bg-[#111a2c] p-3">
+                        <p className="text-xs muted">Guest Records</p>
+                        <p className="mt-1 text-lg font-semibold text-[#e7efff]">{managedEvent.guests.length}</p>
+                    </div>
+                    <div className="rounded-lg border border-[#2e3b56] bg-[#111a2c] p-3">
+                        <p className="text-xs muted">Access Level</p>
+                        <p className="mt-1 text-lg font-semibold text-[#e7efff]">
+                            {managedEvent.accessLevel === 1 ? "Spot Only" : "Browse and Spot"}
+                        </p>
+                    </div>
                 </div>
             </header>
 
-            <div className="mt-4 inline-flex rounded-xl border border-[#2a364d] bg-[#121a2a] p-1">
-                {(["photos", "guests", "access", "settings"] as EventTab[]).map((tab) => (
-                    <button
-                        key={tab}
-                        type="button"
-                        onClick={() => setActiveTab(tab)}
-                        className={`rounded-lg px-3 py-2 text-sm capitalize ${
-                            activeTab === tab
-                                ? "bg-[#1f2e4c] text-[#f6f9ff]"
-                                : "text-[#a2b1cd] hover:text-[#dbe6ff]"
-                        }`}
-                    >
-                        {tab}
-                    </button>
-                ))}
+            <div className="mt-4 overflow-x-auto">
+                <div className="inline-flex min-w-full rounded-xl border border-[#2a364d] bg-[#121a2a] p-1 sm:min-w-0">
+                    {(["photos", "guests", "access", "settings"] as EventTab[]).map((tab) => (
+                        <button
+                            key={tab}
+                            type="button"
+                            onClick={() => setActiveTab(tab)}
+                            className={`rounded-lg px-3 py-2 text-sm capitalize sm:px-4 ${
+                                activeTab === tab
+                                    ? "bg-[#1f2e4c] text-[#f6f9ff]"
+                                    : "text-[#a2b1cd] hover:text-[#dbe6ff]"
+                            }`}
+                        >
+                            {tab}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {activeTab === "photos" ? (
-                <section className="card mt-4 p-5">
-                    <h2 className="text-lg font-semibold">Photos</h2>
+                <section className="card mt-4 p-5 sm:p-6">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h2 className="text-lg font-semibold">Photos</h2>
+                        <p className="text-sm muted">Selected: {selectedPhotoIds.length}</p>
+                    </div>
+
                     <div
-                        className="mt-4 rounded-xl border border-dashed border-[#3a4b70] bg-[#101a2b] p-6 text-sm"
+                        className="mt-4 rounded-xl border border-dashed border-[#3a4b70] bg-[#101a2b] p-6"
                         onDrop={onUploadDrop}
                         onDragOver={(e) => e.preventDefault()}
                     >
-                        <p className="muted">Drag and drop photos here, or click below to upload.</p>
+                        <p className="text-sm text-[#d4e1f8]">Drag and drop photos here</p>
+                        <p className="mt-1 text-xs muted">or choose files from your device</p>
                         <input
                             ref={uploadInputRef}
                             type="file"
@@ -268,7 +309,7 @@ export function EventManagementPage() {
                         <button
                             type="button"
                             onClick={() => uploadInputRef.current?.click()}
-                            className="btn-secondary mt-3 px-4 py-2"
+                            className="btn-secondary mt-4 px-4 py-2"
                         >
                             Select Files
                         </button>
@@ -309,7 +350,6 @@ export function EventManagementPage() {
                     ) : null}
 
                     <div className="mt-6">
-                        <p className="text-sm muted">Selected photos: {selectedPhotoIds.length}</p>
                         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                             {photoPageItems.map((photo) => (
                                 <label key={photo.id} className="photo-tile block p-2 text-xs">
@@ -319,6 +359,7 @@ export function EventManagementPage() {
                                             type="checkbox"
                                             checked={selectedPhotoIds.includes(photo.id)}
                                             onChange={() => togglePhotoSelection(photo.id)}
+                                            className="h-4 w-4 rounded border-[#5b6f98] bg-[#0f1625] accent-[#4f7cff]"
                                         />
                                         Photo #{photo.id}
                                     </span>
@@ -343,35 +384,49 @@ export function EventManagementPage() {
             ) : null}
 
             {activeTab === "guests" ? (
-                <section className="card mt-4 p-5">
-                    <h2 className="text-lg font-semibold">Guests</h2>
+                <section className="card mt-4 p-5 sm:p-6">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h2 className="text-lg font-semibold">Guests</h2>
+                        <p className="text-xs text-[#9fb2d3]">Use View Collection to inspect matched photos</p>
+                    </div>
                     <p className="mt-3 rounded-lg border border-[#2f4669] bg-[#13213a] p-3 text-sm text-[#c9d8f2]">
                         You cannot see the photos guests uploaded for matching
                     </p>
 
-                    <div className="mt-4 overflow-x-auto">
+                    <div className="mt-4 overflow-x-auto rounded-lg border border-[#2a364d]">
                         <table className="w-full min-w-[640px] border-collapse text-sm">
                             <thead>
-                                <tr className="border-b border-[#2a364d] text-left text-[#9aa8c3]">
-                                    <th className="p-2">Name</th>
-                                    <th className="p-2">Accessed</th>
-                                    <th className="p-2">My Photos Count</th>
+                                <tr className="border-b border-[#2a364d] bg-[#101a2b] text-left text-[#9aa8c3]">
+                                    <th className="p-3">Name</th>
+                                    <th className="p-3">Accessed</th>
+                                    <th className="p-3">My Photos Count</th>
+                                    <th className="p-3">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {managedEvent.guests.map((guest) => (
                                     <tr
                                         key={guest.name}
-                                        className="cursor-pointer border-b border-[#1f2a3e] hover:bg-[#121d31]"
-                                        onClick={() =>
-                                            setExpandedGuestName((prev) =>
-                                                prev === guest.name ? null : guest.name,
-                                            )
-                                        }
+                                        className="border-b border-[#1f2a3e] hover:bg-[#121d31]"
                                     >
-                                        <td className="p-2">{guest.name}</td>
-                                        <td className="p-2">{formatWhen(guest.accessedAt)}</td>
-                                        <td className="p-2">{guest.collectionPhotoIds.length}</td>
+                                        <td className="p-3">{guest.name}</td>
+                                        <td className="p-3">{formatWhen(guest.accessedAt)}</td>
+                                        <td className="p-3">{guest.collectionPhotoIds.length}</td>
+                                        <td className="p-3">
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setExpandedGuestName((prev) =>
+                                                        prev === guest.name ? null : guest.name,
+                                                    )
+                                                }
+                                                className="btn-secondary px-3 py-1.5 text-xs"
+                                            >
+                                                {expandedGuestName === guest.name
+                                                    ? "Hide Collection"
+                                                    : "View Collection"}
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -430,6 +485,7 @@ export function EventManagementPage() {
                                                     onChange={() =>
                                                         toggleGuestPhotoSelection(expandedGuestName, photoId)
                                                     }
+                                                    className="h-4 w-4 rounded border-[#5b6f98] bg-[#0f1625] accent-[#4f7cff]"
                                                 />
                                                 #{photoId}
                                             </span>
@@ -443,50 +499,85 @@ export function EventManagementPage() {
             ) : null}
 
             {activeTab === "access" ? (
-                <section className="card mt-4 p-5">
+                <section className="card mt-4 p-5 sm:p-6">
                     <h2 className="text-lg font-semibold">Access</h2>
-                    <div className="mt-3 space-y-2 text-sm">
-                        <label className="flex items-start gap-2 rounded-lg border border-[#2a364d] bg-[#101a2b] p-3">
+                    <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                        <label
+                            className={`cursor-pointer rounded-lg border p-3 transition ${
+                                managedEvent.accessLevel === 1
+                                    ? "border-[#4f7cff] bg-[#152342]"
+                                    : "border-[#2a364d] bg-[#101a2b]"
+                            }`}
+                        >
                             <input
                                 type="radio"
                                 checked={managedEvent.accessLevel === 1}
                                 onChange={() => setEventAccessLevel(managedEvent.id, 1)}
+                                className="h-4 w-4 rounded border-[#5b6f98] bg-[#0f1625] accent-[#4f7cff]"
                             />
-                            <span>
-                                <strong>Level 1 - Spot Only</strong>: guests cannot browse all photos, can only
-                                upload face and find their own
+                            <span className="ml-2 block">
+                                <strong className="text-[#e9f0ff]">Level 1 - Spot Only</strong>
+                                <span className="mt-1 block text-sm text-[#b8c6e4]">
+                                    Guests cannot browse all photos, can only upload face and find their own
+                                </span>
                             </span>
                         </label>
-                        <label className="flex items-start gap-2 rounded-lg border border-[#2a364d] bg-[#101a2b] p-3">
+                        <label
+                            className={`cursor-pointer rounded-lg border p-3 transition ${
+                                managedEvent.accessLevel === 2
+                                    ? "border-[#4f7cff] bg-[#152342]"
+                                    : "border-[#2a364d] bg-[#101a2b]"
+                            }`}
+                        >
                             <input
                                 type="radio"
                                 checked={managedEvent.accessLevel === 2}
                                 onChange={() => setEventAccessLevel(managedEvent.id, 2)}
+                                className="h-4 w-4 rounded border-[#5b6f98] bg-[#0f1625] accent-[#4f7cff]"
                             />
-                            <span>
-                                <strong>Level 2 - Browse and Spot</strong>: guests can see all photos and also use
-                                face spotting
+                            <span className="ml-2 block">
+                                <strong className="text-[#e9f0ff]">Level 2 - Browse and Spot</strong>
+                                <span className="mt-1 block text-sm text-[#b8c6e4]">
+                                    Guests can see all photos and also use face spotting
+                                </span>
                             </span>
                         </label>
                     </div>
 
-                    <div className="mt-4 rounded-lg border border-[#2a364d] bg-[#101a2b] p-3 text-sm">
-                        <p className="text-[#c9d8f2]">spotme.app/events/{managedEvent.id}/guest</p>
-                        <button
-                            type="button"
-                            onClick={copyGuestLink}
-                            className="btn-secondary mt-3 px-3 py-2"
+                    <div className="mt-4 rounded-lg border border-[#2a364d] bg-[#101a2b] p-4 text-sm">
+                        <a
+                            href={guestLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="break-all text-[#9eb7ff] hover:text-[#c8d8ff]"
                         >
-                            Copy Link
-                        </button>
+                            {guestLink}
+                        </a>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={copyGuestLink}
+                                className="btn-secondary px-3 py-2"
+                            >
+                                {copiedLink ? "Copied" : "Copy Link"}
+                            </button>
+                            <a
+                                href={guestLink}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="btn-primary px-3 py-2"
+                            >
+                                Open Link
+                            </a>
+                        </div>
                     </div>
                 </section>
             ) : null}
 
             {activeTab === "settings" ? (
-                <section className="card mt-4 p-5">
+                <section className="card mt-4 p-5 sm:p-6">
                     <h2 className="text-lg font-semibold">Settings</h2>
-                    <div className="mt-3 max-w-md space-y-3">
+                    <div className="mt-4 grid gap-3 md:max-w-xl">
                         <label className="ui-label">
                             Event Name
                             <input
@@ -504,13 +595,14 @@ export function EventManagementPage() {
                                 className="ui-input"
                             />
                         </label>
-                        <button type="button" onClick={saveSettings} className="btn-primary px-4 py-2 text-sm">
+                        <button type="button" onClick={saveSettings} className="btn-primary w-full px-4 py-2 text-sm sm:w-auto">
                             Save Settings
                         </button>
                     </div>
 
                     <div className="mt-8 rounded-lg border border-red-500/60 bg-red-600/10 p-4">
                         <h3 className="font-medium text-red-300">Danger Zone</h3>
+                        <p className="mt-1 text-sm text-red-200/80">Deleting an event will remove all uploaded photos and guest collections.</p>
                         <button
                             type="button"
                             onClick={handleDeleteEvent}
