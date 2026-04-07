@@ -3,6 +3,16 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import type { EventType } from "../types";
 
+function getStatusClass(status: "Uploading" | "Indexing" | "Ready") {
+    if (status === "Ready") {
+        return "status-pill status-ready";
+    }
+    if (status === "Indexing") {
+        return "status-pill status-indexing";
+    }
+    return "status-pill status-uploading";
+}
+
 export function DashboardPage() {
     const navigate = useNavigate();
     const { currentUser, getMyEvents, getSharedEvents, createEvent, logout } = useAppContext();
@@ -42,29 +52,31 @@ export function DashboardPage() {
     }
 
     return (
-        <div className="mx-auto min-h-screen w-full max-w-6xl px-4 py-6">
+        <div className="page-wrap">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h1 className="text-2xl font-semibold">Dashboard</h1>
-                    <p className="text-sm text-gray-700">
+                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                    <p className="mt-1 text-sm muted">
                         Signed in as {currentUser?.name} ({currentUser?.email})
                     </p>
                 </div>
                 <button
                     type="button"
                     onClick={logout}
-                    className="rounded border px-3 py-2 text-sm"
+                    className="btn-secondary px-4 py-2 text-sm"
                 >
                     Log Out
                 </button>
             </div>
 
-            <div className="mt-6 flex gap-2">
+            <div className="mt-6 inline-flex rounded-xl border border-[#2a364d] bg-[#121a2a] p-1">
                 <button
                     type="button"
                     onClick={() => setActiveTab("my-events")}
-                    className={`rounded border px-3 py-2 text-sm ${
-                        activeTab === "my-events" ? "bg-gray-100" : ""
+                    className={`rounded-lg px-4 py-2 text-sm ${
+                        activeTab === "my-events"
+                            ? "bg-[#1f2e4c] text-[#f6f9ff]"
+                            : "text-[#a2b1cd] hover:text-[#dbe6ff]"
                     }`}
                 >
                     My Events
@@ -72,8 +84,10 @@ export function DashboardPage() {
                 <button
                     type="button"
                     onClick={() => setActiveTab("shared")}
-                    className={`rounded border px-3 py-2 text-sm ${
-                        activeTab === "shared" ? "bg-gray-100" : ""
+                    className={`rounded-lg px-4 py-2 text-sm ${
+                        activeTab === "shared"
+                            ? "bg-[#1f2e4c] text-[#f6f9ff]"
+                            : "text-[#a2b1cd] hover:text-[#dbe6ff]"
                     }`}
                 >
                     Shared With Me
@@ -85,7 +99,7 @@ export function DashboardPage() {
                     <button
                         type="button"
                         onClick={() => setShowModal(true)}
-                        className="rounded border px-3 py-2 text-sm"
+                        className="btn-primary w-full px-4 py-2.5 text-sm sm:w-auto"
                     >
                         Create Event
                     </button>
@@ -95,71 +109,89 @@ export function DashboardPage() {
                             <Link
                                 key={eventItem.id}
                                 to={`/events/${eventItem.id}`}
-                                className="rounded border p-4"
+                                className="card block p-4"
                             >
-                                <h2 className="font-medium">{eventItem.name}</h2>
-                                <p className="mt-1 text-sm">Date: {eventItem.date}</p>
-                                <p className="text-sm">Type: {eventItem.type}</p>
-                                <p className="text-sm">Photos: {eventItem.photos.length}</p>
-                                <p className="text-sm">Guests: {eventItem.guests.length}</p>
-                                <span className="mt-2 inline-block rounded border px-2 py-1 text-xs">
+                                <h2 className="font-semibold text-[#eef3ff]">{eventItem.name}</h2>
+                                <p className="mt-2 text-sm muted">Date: {eventItem.date}</p>
+                                <p className="text-sm muted">Type: {eventItem.type}</p>
+                                <p className="mt-3 text-sm text-[#d7e2fa]">Photos: {eventItem.photos.length}</p>
+                                <p className="text-sm text-[#d7e2fa]">Guests: {eventItem.guests.length}</p>
+                                <span className={`mt-3 inline-flex ${getStatusClass(eventItem.status)}`}>
                                     {eventItem.status}
                                 </span>
                             </Link>
                         ))}
                     </div>
+                    {myEvents.length === 0 ? (
+                        <div className="card mt-4 p-10 text-center">
+                            <p className="text-3xl">📷</p>
+                            <p className="mt-2 text-base font-medium">No events yet</p>
+                            <p className="mt-1 text-sm muted">Create your first event to start uploading photos.</p>
+                            <button
+                                type="button"
+                                onClick={() => setShowModal(true)}
+                                className="btn-primary mt-4 px-4 py-2"
+                            >
+                                Create Event
+                            </button>
+                        </div>
+                    ) : null}
                 </section>
             ) : (
                 <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {sharedEvents.map((eventItem) => (
-                        <article key={eventItem.id} className="rounded border p-4">
-                            <h2 className="font-medium">{eventItem.name}</h2>
-                            <p className="mt-1 text-sm">Photographer: Rahul Sharma</p>
-                            <p className="text-sm">Photos: {eventItem.photos.length}</p>
+                        <article key={eventItem.id} className="card p-4">
+                            <h2 className="font-semibold text-[#eef3ff]">{eventItem.name}</h2>
+                            <p className="mt-2 text-sm muted">Photographer: Rahul Sharma</p>
+                            <p className="text-sm text-[#d7e2fa]">Photos: {eventItem.photos.length}</p>
                             <Link
                                 to={`/events/${eventItem.id}/guest`}
-                                className="mt-3 inline-block rounded border px-3 py-1 text-sm"
+                                className="btn-primary mt-4 inline-block px-4 py-2 text-sm"
                             >
                                 View
                             </Link>
                         </article>
                     ))}
                     {sharedEvents.length === 0 ? (
-                        <p className="text-sm text-gray-700">No events shared with this account yet.</p>
+                        <div className="card col-span-full p-10 text-center">
+                            <p className="text-3xl">🔗</p>
+                            <p className="mt-2 text-base font-medium">No shared events yet</p>
+                            <p className="mt-1 text-sm muted">Ask a photographer to share an event link.</p>
+                        </div>
                     ) : null}
                 </section>
             )}
 
             {showModal ? (
-                <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/30 px-4">
-                    <div className="w-full max-w-md rounded bg-white p-4">
-                        <h2 className="text-lg font-medium">Create Event</h2>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+                    <div className="card w-full max-w-md p-5 sm:p-6">
+                        <h2 className="text-xl font-semibold">Create Event</h2>
                         <form onSubmit={handleCreateEvent} className="mt-4 space-y-3">
-                            <label className="flex flex-col gap-1 text-sm">
+                            <label className="ui-label">
                                 Event Name
                                 <input
                                     value={eventName}
                                     onChange={(e) => setEventName(e.target.value)}
-                                    className="rounded border px-3 py-2"
+                                    className="ui-input"
                                 />
                             </label>
 
-                            <label className="flex flex-col gap-1 text-sm">
+                            <label className="ui-label">
                                 Event Date
                                 <input
                                     type="date"
                                     value={eventDate}
                                     onChange={(e) => setEventDate(e.target.value)}
-                                    className="rounded border px-3 py-2"
+                                    className="ui-input"
                                 />
                             </label>
 
-                            <label className="flex flex-col gap-1 text-sm">
+                            <label className="ui-label">
                                 Event Type
                                 <select
                                     value={eventType}
                                     onChange={(e) => setEventType(e.target.value as EventType)}
-                                    className="rounded border px-3 py-2"
+                                    className="ui-input"
                                 >
                                     <option value="Wedding">Wedding</option>
                                     <option value="Corporate">Corporate</option>
@@ -168,20 +200,24 @@ export function DashboardPage() {
                                 </select>
                             </label>
 
-                            {error ? <p className="text-sm text-red-600">{error}</p> : null}
+                            {error ? (
+                                <p className="rounded-md border border-red-400/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                                    {error}
+                                </p>
+                            ) : null}
 
-                            <div className="flex justify-end gap-2">
+                            <div className="flex flex-col justify-end gap-2 sm:flex-row">
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="rounded border px-3 py-2 text-sm"
+                                    className="btn-secondary px-4 py-2 text-sm"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isCreating}
-                                    className="rounded border px-3 py-2 text-sm"
+                                    className="btn-primary px-4 py-2 text-sm"
                                 >
                                     {isCreating ? "Creating..." : "Create"}
                                 </button>

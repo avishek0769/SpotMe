@@ -122,29 +122,37 @@ export function GuestEventPage() {
     }
 
     return (
-        <div className="mx-auto min-h-screen w-full max-w-6xl px-4 py-6">
+        <div className="page-wrap">
             <div className="flex items-center justify-between gap-2">
-                <h1 className="text-2xl font-semibold">{guestEvent.name}</h1>
-                <Link to="/" className="text-sm underline">
+                <h1 className="text-2xl font-bold tracking-tight">{guestEvent.name}</h1>
+                <Link to="/" className="text-sm text-[#9eb7ff] hover:text-[#c8d8ff]">
                     SpotMe Home
                 </Link>
             </div>
-            <p className="mt-1 text-sm">Photographer: Rahul Sharma</p>
+            <p className="mt-2 text-sm muted">Photographer: Rahul Sharma</p>
 
             {!currentUser ? (
-                <div className="mt-3 rounded border bg-yellow-50 p-3 text-sm">
+                <div className="sticky top-16 z-30 mt-3 rounded-lg border border-[#315188] bg-[#12284d] p-3 text-sm text-[#cfe0ff]">
                     You are viewing as a guest. Sign in to save your collection and access it later.
                 </div>
             ) : null}
 
             {guestEvent.accessLevel === 2 ? (
-                <section className="mt-5 rounded border p-4">
-                    <h2 className="text-lg font-medium">All Event Photos</h2>
+                <section className="card mt-5 p-5">
+                    <h2 className="text-lg font-semibold">All Event Photos</h2>
                     <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                         {browsePhotos.map((photo) => (
-                            <img key={photo.id} src={photo.url} alt="Event" className="rounded border" />
+                            <div key={photo.id} className="photo-tile p-2">
+                                <img src={photo.url} alt="Event" className="rounded-md" />
+                            </div>
                         ))}
                     </div>
+                    {guestEvent.photos.length === 0 ? (
+                        <div className="card mt-4 p-8 text-center">
+                            <p className="text-3xl">🖼️</p>
+                            <p className="mt-2 text-base font-medium">No photos to browse yet</p>
+                        </div>
+                    ) : null}
                     <Pagination
                         totalItems={guestEvent.photos.length}
                         currentPage={browsePage}
@@ -154,11 +162,11 @@ export function GuestEventPage() {
                 </section>
             ) : null}
 
-            <section className="mt-5 rounded border p-4">
-                <h2 className="text-lg font-medium">Find My Photos</h2>
+            <section className="card mt-5 p-5">
+                <h2 className="text-lg font-semibold">Find My Photos</h2>
 
                 <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
-                    <label className="flex flex-col gap-1 text-sm">
+                    <label className="ui-label">
                         Your Name
                         <input
                             value={guestName}
@@ -167,7 +175,7 @@ export function GuestEventPage() {
                                 setSelectedMyPhotoIds([]);
                                 setMyPhotosPage(1);
                             }}
-                            className="rounded border px-3 py-2"
+                            className="ui-input"
                             placeholder="Enter your name"
                         />
                     </label>
@@ -175,42 +183,50 @@ export function GuestEventPage() {
                         type="button"
                         onClick={runSearch}
                         disabled={isMatching}
-                        className="rounded border px-4 py-2 text-sm"
+                        className="btn-primary w-full px-4 py-2 text-sm md:w-auto"
                     >
                         Upload Selfie & Find Photos
                     </button>
                 </div>
 
-                <p className="mt-3 text-sm text-gray-700">{toDaysAgoText(guestRecord?.lastSearchedAt ?? null)}</p>
+                <p className="mt-3 text-sm muted">{toDaysAgoText(guestRecord?.lastSearchedAt ?? null)}</p>
                 {guestRecord ? (
                     <button
                         type="button"
                         onClick={runSearch}
                         disabled={isMatching}
-                        className="mt-2 rounded border px-3 py-1 text-sm"
+                        className="btn-secondary mt-2 px-3 py-2 text-sm"
                     >
                         Search Again
                     </button>
                 ) : null}
 
-                {isMatching ? <p className="mt-3 text-sm">Finding your photos...</p> : null}
-                {message ? <p className="mt-3 text-sm">{message}</p> : null}
+                {isMatching ? (
+                    <div className="mt-3 rounded-lg border border-[#2d4164] bg-[#13213a] px-3 py-2 text-sm text-[#d4e2ff]">
+                        Finding your photos...
+                    </div>
+                ) : null}
+                {message ? (
+                    <div className="mt-3 rounded-lg border border-[#2d4164] bg-[#13213a] px-3 py-2 text-sm text-[#d4e2ff]">
+                        {message}
+                    </div>
+                ) : null}
 
-                <div className="mt-4 flex flex-wrap gap-2">
-                    <button type="button" onClick={downloadAll} className="rounded border px-3 py-2 text-sm">
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                    <button type="button" onClick={downloadAll} className="btn-primary px-3 py-2 text-sm">
                         Download All
                     </button>
                     <button
                         type="button"
                         onClick={downloadSelected}
-                        className="rounded border px-3 py-2 text-sm"
+                        className="btn-secondary px-3 py-2 text-sm"
                     >
                         Download Selected
                     </button>
                     <button
                         type="button"
                         onClick={removeSelectedMyPhotos}
-                        className="rounded border px-3 py-2 text-sm"
+                        className="btn-secondary px-3 py-2 text-sm"
                     >
                         Remove Selected
                     </button>
@@ -218,9 +234,9 @@ export function GuestEventPage() {
 
                 <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     {pagedMyPhotos.map((photo) => (
-                        <div key={photo.id} className="space-y-1 text-xs">
-                            <img src={photo.url} alt="My matched" className="rounded border" />
-                            <label className="flex items-center gap-2">
+                        <div key={photo.id} className="photo-tile space-y-1 p-2 text-xs">
+                            <img src={photo.url} alt="My matched" className="rounded-md" />
+                            <label className="mt-2 flex items-center gap-2 text-[#b8c6e4]">
                                 <input
                                     type="checkbox"
                                     checked={selectedMyPhotoIds.includes(photo.id)}
@@ -231,13 +247,20 @@ export function GuestEventPage() {
                             <button
                                 type="button"
                                 onClick={() => removeSinglePhoto(photo.id)}
-                                className="rounded border px-2 py-1"
+                                className="btn-secondary w-full px-2 py-1"
                             >
                                 Remove
                             </button>
                         </div>
                     ))}
                 </div>
+                {myPhotos.length === 0 ? (
+                    <div className="card mt-4 p-8 text-center">
+                        <p className="text-3xl">🔎</p>
+                        <p className="mt-2 text-base font-medium">No matched photos yet</p>
+                        <p className="mt-1 text-sm muted">Upload a selfie and SpotMe will build your collection.</p>
+                    </div>
+                ) : null}
 
                 <Pagination
                     totalItems={myPhotos.length}

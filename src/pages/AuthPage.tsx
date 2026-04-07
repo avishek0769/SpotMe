@@ -54,54 +54,63 @@ export function AuthPage({ mode }: AuthPageProps) {
     }
 
     return (
-        <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-4 py-8">
-            <h1 className="text-2xl font-semibold">{isSignup ? "Create your account" : "Log in"}</h1>
+        <div className="page-wrap flex min-h-[calc(100vh-64px)] items-center justify-center">
+            <div className="card w-full max-w-md p-6 sm:p-7">
+                <p className="text-xs font-medium uppercase tracking-wide text-[#9aa8c3]">SpotMe Access</p>
+                <h1 className="mt-2 text-3xl font-bold tracking-tight text-[#f5f8ff]">
+                    {isSignup ? "Create your account" : "Log in"}
+                </h1>
 
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4 rounded border p-4">
-                {isSignup ? (
-                    <label className="flex flex-col gap-1 text-sm">
-                        Name
+                <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                    {isSignup ? (
+                        <label className="ui-label">
+                            Name
+                            <input
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="ui-input"
+                            />
+                        </label>
+                    ) : null}
+
+                    <label className="ui-label">
+                        Email
                         <input
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="rounded border px-3 py-2"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="ui-input"
                         />
                     </label>
-                ) : null}
 
-                <label className="flex flex-col gap-1 text-sm">
-                    Email
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="rounded border px-3 py-2"
-                    />
-                </label>
+                    <label className="ui-label">
+                        Password
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="ui-input"
+                        />
+                    </label>
 
-                <label className="flex flex-col gap-1 text-sm">
-                    Password
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="rounded border px-3 py-2"
-                    />
-                </label>
+                    {error ? (
+                        <p className="rounded-md border border-red-400/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                            {error}
+                        </p>
+                    ) : null}
 
-                {error ? <p className="text-sm text-red-600">{error}</p> : null}
+                    <button type="submit" disabled={isLoading} className="btn-primary w-full px-4 py-2.5">
+                        {isLoading ? "Please wait..." : isSignup ? "Sign Up" : "Log In"}
+                    </button>
+                </form>
 
-                <button type="submit" disabled={isLoading} className="w-full rounded border px-4 py-2">
-                    {isLoading ? "Please wait..." : isSignup ? "Sign Up" : "Log In"}
-                </button>
-            </form>
-
-            <p className="mt-4 text-sm">
-                {isSignup ? "Already have an account? " : "Need an account? "}
-                <Link to={isSignup ? "/login" : "/signup"} className="underline">
-                    {isSignup ? "Log In" : "Sign Up"}
-                </Link>
-            </p>
+                <p className="mt-5 text-sm text-[#9aa8c3]">
+                    {isSignup ? "Already have an account? " : "Need an account? "}
+                    <Link to={isSignup ? "/login" : "/signup"} className="text-[#9eb7ff] hover:text-[#bfd0ff]">
+                        {isSignup ? "Log In" : "Sign Up"}
+                    </Link>
+                </p>
+            </div>
         </div>
     );
 }

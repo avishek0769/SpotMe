@@ -2,22 +2,32 @@ import { Link } from "react-router-dom";
 
 export function LandingPage() {
     return (
-        <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col justify-center px-4 py-12">
-            <h1 className="text-4xl font-bold">SpotMe</h1>
-            <p className="mt-2 text-lg">Find people in event photos in seconds.</p>
-            <p className="mt-4 max-w-2xl text-sm text-gray-700">
-                SpotMe helps photographers share event photo access with guests, and helps guests quickly
-                find their own photos by uploading a selfie.
-            </p>
+        <div className="page-wrap flex min-h-[calc(100vh-64px)] items-center">
+            <section className="card w-full p-6 sm:p-10">
+                <span className="inline-flex rounded-full border border-[#31405d] bg-[#19233a] px-3 py-1 text-xs font-medium text-[#b8c7e6]">
+                    Photographer and Guest Workspace
+                </span>
+                <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-[#f5f8ff] sm:text-5xl">
+                    SpotMe
+                </h1>
+                <p className="mt-3 max-w-3xl text-lg text-[#d4def2] sm:text-xl">
+                    Find people in event photos in seconds.
+                </p>
+                <p className="mt-4 max-w-3xl text-sm leading-6 text-[#9aa8c3] sm:text-base">
+                    SpotMe helps photographers manage events, upload photo sets, and share guest access.
+                    Guests can quickly find their own photos by uploading a selfie and viewing their My
+                    Photos collection.
+                </p>
 
-            <div className="mt-8 flex gap-3">
-                <Link to="/signup" className="rounded border px-4 py-2">
-                    Sign Up
-                </Link>
-                <Link to="/login" className="rounded border px-4 py-2">
-                    Log In
-                </Link>
-            </div>
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                    <Link to="/signup" className="btn-primary px-5 py-3 text-center text-sm">
+                        Sign Up
+                    </Link>
+                    <Link to="/login" className="btn-secondary px-5 py-3 text-center text-sm">
+                        Log In
+                    </Link>
+                </div>
+            </section>
         </div>
     );
 }
