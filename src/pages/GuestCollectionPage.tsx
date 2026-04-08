@@ -16,10 +16,12 @@ export function GuestCollectionPage() {
     } = useAppContext();
 
     const [page, setPage] = useState(1);
+    const [allPhotosPage, setAllPhotosPage] = useState(1);
     const [selectedSelfieCount, setSelectedSelfieCount] = useState(0);
     const [isMatching, setIsMatching] = useState(false);
     const [message, setMessage] = useState("");
     const [selectedPhotoIds, setSelectedPhotoIds] = useState<number[]>([]);
+    const [activeTab, setActiveTab] = useState<"find" | "all">("find");
     const selfieInputRef = useRef<HTMLInputElement | null>(null);
 
     if (!currentUser) {
@@ -44,6 +46,10 @@ export function GuestCollectionPage() {
         .filter((photo): photo is NonNullable<typeof photo> => Boolean(photo));
 
     const pagedMyPhotos = myPhotos.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const pagedAllEventPhotos = collectionEvent.photos.slice(
+        (allPhotosPage - 1) * PAGE_SIZE,
+        allPhotosPage * PAGE_SIZE,
+    );
 
     function onSelfieInputChange(event: ChangeEvent<HTMLInputElement>) {
         const fileCount = event.target.files?.length ?? 0;
@@ -119,119 +125,197 @@ export function GuestCollectionPage() {
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">My Collection</h1>
                     <p className="mt-1 text-sm muted">{collectionEvent.name}</p>
+                    <div className="mt-2 inline-flex">
+                        <span
+                            className={`status-pill ${
+                                collectionEvent.accessLevel === 2
+                                    ? "status-ready"
+                                    : "status-uploading"
+                            }`}
+                        >
+                            {collectionEvent.accessLevel === 2 ? "Browse and Spot" : "Spot Only"}
+                        </span>
+                    </div>
                 </div>
                 <Link to="/dashboard" className="btn-secondary px-4 py-2 text-sm">
                     Back to Dashboard
                 </Link>
             </div>
 
-            <section className="card mt-5 p-5">
-                <h2 className="text-lg font-semibold">Upload Selfie and Find</h2>
-                <p className="mt-1 text-sm muted">
-                    Signed in as {guestName}. Select up to 3 selfies and run matching.
-                </p>
+            <div className="mt-5 inline-flex rounded-xl border border-[#2a364d] bg-[#121a2a] p-1">
+                <button
+                    type="button"
+                    onClick={() => setActiveTab("find")}
+                    className={`rounded-lg px-4 py-2 text-sm ${
+                        activeTab === "find"
+                            ? "bg-[#1f2e4c] text-[#f6f9ff]"
+                            : "text-[#a2b1cd] hover:text-[#dbe6ff]"
+                    }`}
+                >
+                    Find Your Photos
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setActiveTab("all")}
+                    className={`rounded-lg px-4 py-2 text-sm ${
+                        activeTab === "all"
+                            ? "bg-[#1f2e4c] text-[#f6f9ff]"
+                            : "text-[#a2b1cd] hover:text-[#dbe6ff]"
+                    }`}
+                >
+                    All Event Photos
+                </button>
+            </div>
 
-                <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-                    <label className="ui-label">
-                        Selfie Files (1-3)
-                        <input
-                            ref={selfieInputRef}
-                            type="file"
-                            multiple
-                            accept="image/*"
-                            onChange={onSelfieInputChange}
-                            className="ui-input"
-                        />
-                    </label>
-                    <button
-                        type="button"
-                        disabled={isMatching}
-                        onClick={runMatching}
-                        className="btn-primary w-full px-4 py-2 text-sm sm:w-auto"
-                    >
-                        {isMatching ? "Finding..." : "Upload & Find"}
-                    </button>
-                </div>
+            {activeTab === "find" ? (
+                <>
+                    <section className="card mt-5 p-5">
+                        <h2 className="text-lg font-semibold">Upload Selfie and Find</h2>
+                        <p className="mt-1 text-sm muted">
+                            Signed in as {guestName}. Select up to 3 selfies and run matching.
+                        </p>
 
-                <p className="mt-2 text-sm muted">Selected selfies: {selectedSelfieCount}</p>
-                {message ? (
-                    <div className="mt-3 rounded-lg border border-[#2d4164] bg-[#13213a] px-3 py-2 text-sm text-[#d4e2ff]">
-                        {message}
-                    </div>
-                ) : null}
-            </section>
-
-            <section className="card mt-5 p-5">
-                <h2 className="text-lg font-semibold">My Photos</h2>
-                <p className="mt-1 text-sm muted">Photos matched for {guestName}</p>
-
-                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                    {pagedMyPhotos.map((photo) => (
-                        <div key={photo.id} className="photo-tile p-2">
-                            <img src={photo.url} alt="My photo" className="rounded-md" />
-                            <label className="mt-2 flex items-center gap-2 text-xs text-[#b8c6e4]">
+                        <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                            <label className="ui-label">
+                                Selfie Files (1-3)
                                 <input
-                                    type="checkbox"
-                                    checked={selectedPhotoIds.includes(photo.id)}
-                                    onChange={() => togglePhoto(photo.id)}
+                                    ref={selfieInputRef}
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    onChange={onSelfieInputChange}
+                                    className="ui-input"
                                 />
-                                #{photo.id}
                             </label>
+                            <button
+                                type="button"
+                                disabled={isMatching}
+                                onClick={runMatching}
+                                className="btn-primary w-full px-4 py-2 text-sm sm:w-auto"
+                            >
+                                {isMatching ? "Finding..." : "Upload & Find"}
+                            </button>
                         </div>
-                    ))}
-                </div>
 
-                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                    <button
-                        type="button"
-                        onClick={() => window.alert(`Downloading ${myPhotos.length} photos`)}
-                        className="btn-primary px-4 py-2 text-sm"
-                    >
-                        Download All
-                    </button>
-                    <button
-                        type="button"
-                        onClick={removeSelected}
-                        className="btn-secondary px-4 py-2 text-sm"
-                    >
-                        Remove Selected
-                    </button>
-                </div>
+                        <p className="mt-2 text-sm muted">Selected selfies: {selectedSelfieCount}</p>
+                        {message ? (
+                            <div className="mt-3 rounded-lg border border-[#2d4164] bg-[#13213a] px-3 py-2 text-sm text-[#d4e2ff]">
+                                {message}
+                            </div>
+                        ) : null}
+                    </section>
 
-                {myPhotos.length === 0 ? (
-                    <div className="card mt-4 p-8 text-center">
-                        <p className="text-3xl">🔎</p>
-                        <p className="mt-2 text-base font-medium">No matched photos yet</p>
-                        <p className="mt-1 text-sm muted">Use Upload & Find above on this same page.</p>
-                    </div>
-                ) : null}
+                    <section className="card mt-5 p-5">
+                        <h2 className="text-lg font-semibold">My Photos</h2>
+                        <p className="mt-1 text-sm muted">Photos matched for {guestName}</p>
 
-                <Pagination totalItems={myPhotos.length} currentPage={page} pageSize={PAGE_SIZE} onPageChange={setPage} />
-            </section>
-
-            <section className="card mt-5 p-5">
-                <h2 className="text-lg font-semibold">Selfies Uploaded For Matching</h2>
-                <p className="mt-1 text-sm muted">Latest 1-3 uploads used for the most recent matching run</p>
-
-                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                    {(guestRecord?.matchingUploads ?? []).map((upload) => (
-                        <div key={upload.id} className="photo-tile p-2">
-                            <img src={upload.url} alt="Uploaded for matching" className="rounded-md" />
-                            <p className="mt-2 text-xs text-[#b8c6e4]">
-                                Uploaded {new Date(upload.uploadedAt).toLocaleString()}
-                            </p>
+                        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                            {pagedMyPhotos.map((photo) => (
+                                <div key={photo.id} className="photo-tile p-2">
+                                    <img src={photo.url} alt="My photo" className="rounded-md" />
+                                    <label className="mt-2 flex items-center gap-2 text-xs text-[#b8c6e4]">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedPhotoIds.includes(photo.id)}
+                                            onChange={() => togglePhoto(photo.id)}
+                                        />
+                                        #{photo.id}
+                                    </label>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
 
-                {(guestRecord?.matchingUploads.length ?? 0) === 0 ? (
-                    <div className="card mt-4 p-8 text-center">
-                        <p className="text-3xl">📸</p>
-                        <p className="mt-2 text-base font-medium">No selfie uploads yet</p>
-                        <p className="mt-1 text-sm muted">Upload a selfie from the event guest page to start matching.</p>
-                    </div>
-                ) : null}
-            </section>
+                        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                            <button
+                                type="button"
+                                onClick={() => window.alert(`Downloading ${myPhotos.length} photos`)}
+                                className="btn-primary px-4 py-2 text-sm"
+                            >
+                                Download All
+                            </button>
+                            <button
+                                type="button"
+                                onClick={removeSelected}
+                                className="btn-secondary px-4 py-2 text-sm"
+                            >
+                                Remove Selected
+                            </button>
+                        </div>
+
+                        {myPhotos.length === 0 ? (
+                            <div className="card mt-4 p-8 text-center">
+                                <p className="text-3xl">🔎</p>
+                                <p className="mt-2 text-base font-medium">No matched photos yet</p>
+                                <p className="mt-1 text-sm muted">Use Upload & Find above on this same page.</p>
+                            </div>
+                        ) : null}
+
+                        <Pagination
+                            totalItems={myPhotos.length}
+                            currentPage={page}
+                            pageSize={PAGE_SIZE}
+                            onPageChange={setPage}
+                        />
+                    </section>
+
+                    <section className="card mt-5 p-5">
+                        <h2 className="text-lg font-semibold">Selfies Uploaded For Matching</h2>
+                        <p className="mt-1 text-sm muted">Latest 1-3 uploads used for the most recent matching run</p>
+
+                        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                            {(guestRecord?.matchingUploads ?? []).map((upload) => (
+                                <div key={upload.id} className="photo-tile p-2">
+                                    <img src={upload.url} alt="Uploaded for matching" className="rounded-md" />
+                                    <p className="mt-2 text-xs text-[#b8c6e4]">
+                                        Uploaded {new Date(upload.uploadedAt).toLocaleString()}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {(guestRecord?.matchingUploads.length ?? 0) === 0 ? (
+                            <div className="card mt-4 p-8 text-center">
+                                <p className="text-3xl">📸</p>
+                                <p className="mt-2 text-base font-medium">No selfie uploads yet</p>
+                                <p className="mt-1 text-sm muted">Upload a selfie from the event guest page to start matching.</p>
+                            </div>
+                        ) : null}
+                    </section>
+                </>
+            ) : null}
+
+            {activeTab === "all" ? (
+                collectionEvent.accessLevel === 2 ? (
+                    <section className="card mt-5 p-5">
+                        <h2 className="text-lg font-semibold">All Event Photos</h2>
+                        <p className="mt-1 text-sm muted">You can browse the full event gallery for this event.</p>
+
+                        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                            {pagedAllEventPhotos.map((photo) => (
+                                <div key={photo.id} className="photo-tile p-2">
+                                    <img src={photo.url} alt="Event" className="rounded-md" />
+                                    <p className="mt-2 text-xs text-[#b8c6e4]">#{photo.id}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        <Pagination
+                            totalItems={collectionEvent.photos.length}
+                            currentPage={allPhotosPage}
+                            pageSize={PAGE_SIZE}
+                            onPageChange={setAllPhotosPage}
+                        />
+                    </section>
+                ) : (
+                    <section className="card mt-5 p-5">
+                        <h2 className="text-lg font-semibold">All Event Photos</h2>
+                        <p className="mt-1 text-sm muted">This event is shared as Spot Only.</p>
+                        <div className="mt-4 rounded-lg border border-[#2f4669] bg-[#13213a] p-3 text-sm text-[#c9d8f2]">
+                            You can only upload selfies and view your matched photos. Browsing all event photos is disabled.
+                        </div>
+                    </section>
+                )
+            ) : null}
         </div>
     );
 }
