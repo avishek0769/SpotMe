@@ -28,7 +28,6 @@ export function EventManagementPage() {
     const navigate = useNavigate();
     const { id } = useParams();
     const {
-        currentUser,
         events,
         setEventStatus,
         addPhotosToEvent,
@@ -82,19 +81,6 @@ export function EventManagementPage() {
         typeof window !== "undefined"
             ? `${window.location.origin}/events/${managedEvent.id}/guest`
             : `/events/${managedEvent.id}/guest`;
-
-    if (managedEvent.photographerId !== currentUser?.id) {
-        return (
-            <div className="page-wrap">
-                <div className="card max-w-3xl p-6">
-                    <p className="text-sm muted">Only the photographer can manage this event.</p>
-                    <Link to="/dashboard" className="mt-2 inline-block text-sm text-[#a8c0ff] hover:text-[#d7e4ff]">
-                    Back to dashboard
-                    </Link>
-                </div>
-            </div>
-        );
-    }
 
     const photoPageItems = managedEvent.photos.slice((photoPage - 1) * PAGE_SIZE, photoPage * PAGE_SIZE);
 

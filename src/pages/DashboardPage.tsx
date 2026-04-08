@@ -59,6 +59,7 @@ const sharedDummyCards = [
 
 const myEventDummyCard = {
     id: "dummy-my-event-1",
+    eventId: "evt-1",
     name: "Demo Event (Created)",
     date: "2026-04-01",
     type: "Other",
@@ -161,16 +162,13 @@ export function DashboardPage() {
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {myEvents.map((eventItem) => (
-                            (() => {
-                                const cardStatus = getEventCardStatus(eventItem);
-                                const coverUrl = getEventCoverPhoto(eventItem);
+                            <article key={eventItem.id} className="card group p-5">
+                                {(() => {
+                                    const cardStatus = getEventCardStatus(eventItem);
+                                    const coverUrl = getEventCoverPhoto(eventItem);
 
-                                return (
-                            <Link
-                                key={eventItem.id}
-                                to={`/events/${eventItem.id}`}
-                                className="card group block p-5"
-                            >
+                                    return (
+                                        <>
                                 <div className="overflow-hidden rounded-lg border border-[#2b3954] bg-[#101a2b]">
                                     <img
                                         src={coverUrl}
@@ -202,9 +200,16 @@ export function DashboardPage() {
                                         <p className="mt-1 text-[#d7e2fa]">{eventItem.guests.length}</p>
                                     </div>
                                 </div>
-                            </Link>
-                                );
-                            })()
+                                <Link
+                                    to={`/events/${eventItem.id}`}
+                                    className="btn-primary mt-4 inline-block px-4 py-2 text-sm"
+                                >
+                                    View Event
+                                </Link>
+                                        </>
+                                    );
+                                })()}
+                            </article>
                         ))}
 
                         {myEvents.length === 0 ? (
@@ -242,6 +247,12 @@ export function DashboardPage() {
                                         <p className="mt-1 text-[#d7e2fa]">{myEventDummyCard.guests}</p>
                                     </div>
                                 </div>
+                                <Link
+                                    to={`/events/${myEventDummyCard.eventId}`}
+                                    className="btn-primary mt-4 inline-block px-4 py-2 text-sm"
+                                >
+                                    View Event
+                                </Link>
                             </article>
                         ) : null}
                     </div>
@@ -269,7 +280,7 @@ export function DashboardPage() {
                                     to={`/events/${eventItem.id}/guest/collection`}
                                     className="btn-primary mt-4 inline-block px-4 py-2 text-sm"
                                 >
-                                    View All
+                                    View Event
                                 </Link>
                             </article>
                     ))}
@@ -300,7 +311,7 @@ export function DashboardPage() {
                                         to={`/events/${card.eventId}/guest/collection`}
                                         className="btn-secondary mt-4 inline-block px-4 py-2 text-sm"
                                     >
-                                        View All
+                                        View Event
                                     </Link>
                                 </article>
                             ))}
