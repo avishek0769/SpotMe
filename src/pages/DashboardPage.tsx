@@ -30,6 +30,14 @@ function getEventCardStatus(eventItem: {
     };
 }
 
+function getEventCoverPhoto(eventItem: { id: string; photos: { id: number; url: string }[] }) {
+    if (eventItem.photos.length > 0) {
+        return eventItem.photos[0].url;
+    }
+
+    return `https://picsum.photos/seed/event-cover-${eventItem.id}/800/450`;
+}
+
 const sharedDummyCards = [
     {
         id: "dummy-shared-1",
@@ -37,6 +45,7 @@ const sharedDummyCards = [
         name: "Nisha & Rohan Reception",
         photographer: "Amit Verma",
         photos: 186,
+        coverUrl: "https://picsum.photos/seed/dummy-cover-1/800/450",
     },
     {
         id: "dummy-shared-2",
@@ -44,8 +53,20 @@ const sharedDummyCards = [
         name: "Startup Summit 2025",
         photographer: "Neha Kapoor",
         photos: 124,
+        coverUrl: "https://picsum.photos/seed/dummy-cover-2/800/450",
     },
 ];
+
+const myEventDummyCard = {
+    id: "dummy-my-event-1",
+    name: "Demo Event (Created)",
+    date: "2026-04-01",
+    type: "Other",
+    photos: 42,
+    guests: 5,
+    status: "Ready" as const,
+    coverUrl: "https://picsum.photos/seed/dummy-my-event-cover/800/450",
+};
 
 export function DashboardPage() {
     const navigate = useNavigate();
@@ -142,6 +163,7 @@ export function DashboardPage() {
                         {myEvents.map((eventItem) => (
                             (() => {
                                 const cardStatus = getEventCardStatus(eventItem);
+                                const coverUrl = getEventCoverPhoto(eventItem);
 
                                 return (
                             <Link
@@ -149,11 +171,18 @@ export function DashboardPage() {
                                 to={`/events/${eventItem.id}`}
                                 className="card group block p-5"
                             >
+                                <div className="overflow-hidden rounded-lg border border-[#2b3954] bg-[#101a2b]">
+                                    <img
+                                        src={coverUrl}
+                                        alt={`${eventItem.name} cover`}
+                                        className="h-40 w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                                    />
+                                </div>
                                 <div className="flex items-start justify-between gap-3">
-                                    <h2 className="line-clamp-2 font-semibold text-[#eef3ff] group-hover:text-white">
+                                    <h2 className="mt-3 line-clamp-2 font-semibold text-[#eef3ff] group-hover:text-white">
                                         {eventItem.name}
                                     </h2>
-                                    <span className={cardStatus.className}>{cardStatus.label}</span>
+                                    <span className={`mt-3 ${cardStatus.className}`}>{cardStatus.label}</span>
                                 </div>
                                 <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg border border-[#2b3954] bg-[#101a2b] p-3 text-xs">
                                     <div>
@@ -177,28 +206,59 @@ export function DashboardPage() {
                                 );
                             })()
                         ))}
+
+                        {myEvents.length === 0 ? (
+                            <article className="card p-5">
+                                <div className="overflow-hidden rounded-lg border border-[#2b3954] bg-[#101a2b]">
+                                    <img
+                                        src={myEventDummyCard.coverUrl}
+                                        alt={`${myEventDummyCard.name} cover`}
+                                        className="h-40 w-full object-cover"
+                                    />
+                                </div>
+                                <div className="mt-3 flex items-start justify-between gap-3">
+                                    <h2 className="line-clamp-2 font-semibold text-[#eef3ff]">
+                                        {myEventDummyCard.name}
+                                    </h2>
+                                    <span className={getStatusClass(myEventDummyCard.status)}>
+                                        {myEventDummyCard.status}
+                                    </span>
+                                </div>
+                                <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg border border-[#2b3954] bg-[#101a2b] p-3 text-xs">
+                                    <div>
+                                        <p className="muted">Date</p>
+                                        <p className="mt-1 text-[#d7e2fa]">{myEventDummyCard.date}</p>
+                                    </div>
+                                    <div>
+                                        <p className="muted">Type</p>
+                                        <p className="mt-1 text-[#d7e2fa]">{myEventDummyCard.type}</p>
+                                    </div>
+                                    <div>
+                                        <p className="muted">Photos</p>
+                                        <p className="mt-1 text-[#d7e2fa]">{myEventDummyCard.photos}</p>
+                                    </div>
+                                    <div>
+                                        <p className="muted">Guests</p>
+                                        <p className="mt-1 text-[#d7e2fa]">{myEventDummyCard.guests}</p>
+                                    </div>
+                                </div>
+                            </article>
+                        ) : null}
                     </div>
-                    {myEvents.length === 0 ? (
-                        <div className="card mt-4 p-10 text-center">
-                            <p className="text-3xl">📷</p>
-                            <p className="mt-2 text-base font-medium">No events yet</p>
-                            <p className="mt-1 text-sm muted">Create your first event to start uploading photos.</p>
-                            <button
-                                type="button"
-                                onClick={() => setShowModal(true)}
-                                className="btn-primary mt-4 px-4 py-2"
-                            >
-                                Create Event
-                            </button>
-                        </div>
-                    ) : null}
                 </section>
             ) : (
                 <section className="mt-4 space-y-4">
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {sharedEvents.map((eventItem) => (
                             <article key={eventItem.id} className="card p-5">
-                                <h2 className="font-semibold text-[#eef3ff]">{eventItem.name}</h2>
+                                <div className="overflow-hidden rounded-lg border border-[#2b3954] bg-[#101a2b]">
+                                    <img
+                                        src={getEventCoverPhoto(eventItem)}
+                                        alt={`${eventItem.name} cover`}
+                                        className="h-40 w-full object-cover"
+                                    />
+                                </div>
+                                <h2 className="mt-3 font-semibold text-[#eef3ff]">{eventItem.name}</h2>
                                 <div className="mt-3 rounded-lg border border-[#2b3954] bg-[#101a2b] p-3 text-xs">
                                     <p className="muted">Photographer</p>
                                     <p className="mt-1 text-sm text-[#d7e2fa]">Rahul Sharma</p>
@@ -222,7 +282,14 @@ export function DashboardPage() {
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             {sharedDummyCards.map((card) => (
                                 <article key={card.id} className="card p-5">
-                                    <h2 className="font-semibold text-[#eef3ff]">{card.name}</h2>
+                                    <div className="overflow-hidden rounded-lg border border-[#2b3954] bg-[#101a2b]">
+                                        <img
+                                            src={card.coverUrl}
+                                            alt={`${card.name} cover`}
+                                            className="h-40 w-full object-cover"
+                                        />
+                                    </div>
+                                    <h2 className="mt-3 font-semibold text-[#eef3ff]">{card.name}</h2>
                                     <div className="mt-3 rounded-lg border border-[#2b3954] bg-[#101a2b] p-3 text-xs">
                                         <p className="muted">Photographer</p>
                                         <p className="mt-1 text-sm text-[#d7e2fa]">{card.photographer}</p>
