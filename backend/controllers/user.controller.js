@@ -3,6 +3,11 @@ import asyncHandler from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import jwt from "jsonwebtoken";
+import redis from "../utils/redis.js";
+import { Resend } from "resend";
+import crypto from "crypto";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -19,10 +24,61 @@ const generateAccessAndRefreshTokens = async (userId) => {
     }
 };
 
+const sendVerificationCode = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if(!user){
+        await User.create({ email });
+    }
+    else if (user.isVerified) {
+        throw new ApiError(401, "User with this email already exists");
+    }
+
+    const code = crypto.randomInt(10000, 99999); // Sync code
+    await redis.set(email, code, "EX", 3 * 60);
+
+    await resend.emails.send({
+        from: "SpotMe <onboarding@avishekadhikary.tech>",
+        to: email,
+        subject: "SpotMe - Email Verification Code",
+        html: `<p>Your verification code is: <strong>${code}</strong></p>`,
+    });
+
+    res.status(200).json(
+        new ApiResponse(
+            200,
+            { emailSent: true },
+            "Verification code sent to email successfully !!",
+        ),
+    );
+});
+
+const verifyEmail = asyncHandler(async (req, res) => {
+    const { email, code } = req.body;
+    const storedCode = await redis.get(email);
+
+    if (Number(code) != storedCode) {
+        throw new ApiError(400, "Invalid verification code");
+    }
+
+    const user = await User.findOneAndUpdate(
+        { email },
+        { isVerified: true },
+        { returnDocument: "after" },
+    );
+
+    await redis.del(email);
+
+    res.status(200).json(
+        new ApiResponse(200, { ...user._doc }, "Email verified successfully !!"),
+    );
+});
+
 const userRegister = asyncHandler(async (req, res) => {
     const { fullname, username, email, password } = req.body;
 
-    if ( 
+    if (
         [fullname, username, email, password].some(
             (field) => field?.trim() === "",
         )
@@ -109,7 +165,7 @@ const userLogOut = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "User Loogged out Successfully"));
 });
 
-const refreshAccessToken = asyncHandler(async (req, res) => {
+const refreshAuthTokens = asyncHandler(async (req, res) => {
     const incomingToken =
         req.cookies?.refreshToken ||
         req.headers("Authorization").replace("Bearer ", "");
@@ -142,4 +198,73 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         );
 });
 
-export { userRegister, userLogIn, userLogOut, refreshAccessToken };
+const currentUserProfile = asyncHandler(async (req, res) => {
+    const user = req.user;
+    res.status(200).json(
+        new ApiResponse(
+            200,
+            user,
+            "Current user profile fetched successfully !",
+        ),
+    );
+});
+
+const sendResetCode = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        throw new ApiError(404, "User with this email does not exist");
+    }
+
+    const code = crypto.randomInt(10000, 99999);
+    await redis.set(email, code, "EX", 3 * 60);
+
+    await resend.emails.send({
+        from: "SpotMe <onboarding@avishekadhikary.tech>",
+        to: email,
+        subject: "SpotMe - Password Reset Code",
+        html: `<p>Your password reset code is: <strong>${code}</strong></p>`,
+    });
+
+    res.status(200).json(
+        new ApiResponse(200, { emailSent: true }, "Reset code sent successfully !!"),
+    );
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+    const { email, code, password } = req.body;
+
+    const storedCode = await redis.get(email);
+    if (Number(code) !== Number(storedCode)) {
+        throw new ApiError(400, "Invalid verification code");
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        throw new ApiError(404, "User with this email does not exist");
+    }
+
+    await User.updateOne({ email }, { password });
+
+    await redis.del(email);
+
+    res.status(200).json(
+        new ApiResponse(200, { reset: true }, "Password reset successfully !!"),
+    );
+});
+
+
+export {
+    sendVerificationCode,
+    verifyEmail,
+    userRegister,
+    userLogIn,
+    userLogOut,
+    refreshAuthTokens,
+    resetPassword,
+    sendResetCode,
+    currentUserProfile,
+};

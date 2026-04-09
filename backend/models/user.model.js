@@ -6,13 +6,11 @@ const userSchema = new Schema(
     {
         fullname: {
             type: String,
-            required: true,
             trim: true,
             index: true,
         },
         username: {
             type: String,
-            required: true,
             lowercase: true,
             unique: true,
             trim: true,
@@ -27,10 +25,13 @@ const userSchema = new Schema(
         },
         password: {
             type: String,
-            required: [true, "Password is required"],
         },
         refreshToken: {
             type: String,
+        },
+        isVerified: {
+            type: Boolean,
+            default: false,
         },
     },
     { timestamps: true },
