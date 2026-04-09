@@ -259,7 +259,8 @@ const resetPassword = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User with this email does not exist");
     }
 
-    await User.updateOne({ email }, { password });
+    user.password = password;
+    await user.save();
 
     await redis.del(email);
 
