@@ -3,13 +3,17 @@ import mongoose, { Schema, model } from "mongoose";
 const photoSchema = new Schema({
     eventId: {
         type: mongoose.Types.ObjectId,
-        ref: "Event",
+        ref: "events",
         required: true
     },
     url: {
         type: String,
         required: true
-    }
+    },
+    collectionIds: [{
+        type: mongoose.Types.ObjectId,
+        ref: "collections"
+    }]
 }, { timestamps: true });
 
 const Photo = model("Photo", photoSchema);

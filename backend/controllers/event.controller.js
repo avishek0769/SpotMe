@@ -1,10 +1,14 @@
 import Event from "../models/event.model.js";
+import Photo from "../models/photo.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import mongoose from "mongoose";
 import { S3Client } from "@aws-sdk/client-s3";
 import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
+import { Queue } from "bullmq";
+
+const imageQueue = new Queue("imageQueue");
 
 const s3Client = new S3Client({
     region: process.env.AWS_REGION,
@@ -19,7 +23,7 @@ const createEvent = asyncHandler(async (req, res) => {
     if (!name || !eventDate) {
         throw new ApiError(400, "Name and event date are required");
     }
-    if(accessLevel && !["spot", "browse"].includes(accessLevel)) {
+    if (accessLevel && !["spot", "browse"].includes(accessLevel)) {
         throw new ApiError(400, "Invalid access level");
     }
 
@@ -88,7 +92,25 @@ const getSignedUrl = asyncHandler(async (req, res) => {
 });
 
 const enqueueBatch = asyncHandler(async (req, res) => {
-    // TODO: Implement batch enqueueing logic
+    const { urls, eventId } = req.body;
+
+    await Photo.bulkWrite(urls.map(url => ({
+        insertOne: {
+            document: {
+                url,
+                eventId,
+                collectionIds: []
+            }
+        }
+    })));
+    
+    await imageQueue.add("processImages", { urls, eventId });
+
+    return res.status(200).json(new ApiResponse(
+        200,
+        null,
+        "Batch processing enqueued successfully"
+    ));
 })
 
 export {

@@ -11,12 +11,12 @@ const eventSchema = new Schema({
     },
     userId: {
         type: mongoose.Types.ObjectId,
-        ref: "User",
+        ref: "users",
         required: true
     },
     coverImage: {
         type: mongoose.Types.ObjectId,
-        ref: "Photo"
+        ref: "photos"
     },
     accessLevel: {
         type: String,

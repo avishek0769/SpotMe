@@ -9,6 +9,6 @@ eventRouter.route("/list").get(verifyStrictJWT, getAllEvents);
 eventRouter.route("/edit/:eventId").patch(verifyStrictJWT, editEvent);
 eventRouter.route("/delete/:eventId").delete(verifyStrictJWT, deleteEvent);
 eventRouter.route("/signed-url/:eventId").get(verifyStrictJWT, getSignedUrl);
-eventRouter.route("/enqueue-batch").patch(verifyStrictJWT, enqueueBatch);
+eventRouter.route("/enqueue-batch").post(verifyStrictJWT, enqueueBatch);
 
 export default eventRouter;
