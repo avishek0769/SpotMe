@@ -21,7 +21,7 @@ userRouter.route("/logout").get(verifyStrictJWT, userLogOut);
 userRouter.route("/login").post(userLogIn); 
 userRouter.route("/logout").get(verifyStrictJWT, userLogOut);
 userRouter.route("/refresh-auth-tokens").patch(refreshAuthTokens);
-userRouter.route("/profile").get(verifyStrictJWT, currentUserProfile);
+userRouter.route("/current").get(verifyStrictJWT, currentUserProfile);
 userRouter.route("/send-reset-code").post(sendResetCode);
 userRouter.route("/reset-password").patch(resetPassword);
 

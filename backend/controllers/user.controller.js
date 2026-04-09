@@ -9,6 +9,18 @@ import crypto from "crypto";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+const AccessOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60 * 1000, // 1 hour
+};
+
+const RefreshOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+};
+
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
         const user = await User.findById(userId);
@@ -28,7 +40,7 @@ const sendVerificationCode = asyncHandler(async (req, res) => {
     const { email } = req.body;
     const user = await User.findOne({ email });
 
-    if(!user){
+    if (!user) {
         await User.create({ email });
     }
     else if (user.isVerified) {
@@ -86,25 +98,25 @@ const userRegister = asyncHandler(async (req, res) => {
         throw new ApiError(400, "All fields are required");
     }
 
-    const user = await User.create({
-        fullname: fullname,
-        username: username.toLowerCase(),
-        password,
-        email,
-    });
-
-    let createdUser = await User.findById(user._id).select(
+    let createdUser = await User.findOne({ email, isVerified: true }).select(
         "-password -refreshToken",
     );
-    if (!createdUser)
-        throw new ApiError(500, "Something went wrong while registering");
+    if (!createdUser) throw new ApiError(500, "Something went wrong while registering");
+
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(createdUser._id);
+
+    createdUser.fullname = fullname;
+    createdUser.username = username;
+    createdUser.password = password;
+    createdUser.refreshToken = refreshToken;
+    await createdUser.save();
 
     return res
         .status(200)
         .json(
             new ApiResponse(
                 201,
-                createdUser,
+                { ...createdUser._doc, accessToken },
                 "User Registered Successfully !!",
             ),
         );
@@ -144,7 +156,7 @@ const userLogIn = asyncHandler(async (req, res) => {
             new ApiResponse(
                 201,
                 {
-                    user: loggedInUser,
+                    ...loggedInUser._doc,
                     accessToken: accessToken,
                     refreshToken: refreshToken,
                 },
@@ -192,7 +204,7 @@ const refreshAuthTokens = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 200,
-                { user, accessToken, refreshToken: newRefreshToken },
+                { ...user, accessToken, refreshToken: newRefreshToken },
                 "Access Token refreshed !",
             ),
         );
