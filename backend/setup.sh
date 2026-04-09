@@ -1,3 +1,4 @@
+export PATH="$HOME/.nvm/versions/node/v20.20.2/bin:$PATH"
 nvm install 20
 nvm use 20
 
