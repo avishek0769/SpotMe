@@ -38,6 +38,11 @@ const createEvent = asyncHandler(async (req, res) => {
     return res.status(201).json(new ApiResponse(201, event, "Event created successfully"));
 });
 
+const getAllEvents = asyncHandler(async (req, res) => {
+    const events = await Event.find({ userId: req.user._id })
+    return res.status(200).json(new ApiResponse(200, events, "Successfully fetched all events for this user"))
+})
+
 const editEvent = asyncHandler(async (req, res) => {
     const { eventId } = req.params;
     const { name, eventDate, accessLevel, photoId } = req.body;
@@ -57,6 +62,10 @@ const editEvent = asyncHandler(async (req, res) => {
 
     return res.status(200).json(new ApiResponse(200, event, "Event updated successfully"));
 });
+
+const deleteEvent = asyncHandler(async (req, res) => {
+    // TODO: Implement event deletion logic
+})
 
 const getSignedUrl = asyncHandler(async (req, res) => {
     const { eventId } = req.params;
@@ -78,8 +87,15 @@ const getSignedUrl = asyncHandler(async (req, res) => {
     ));
 });
 
+const enqueueBatch = asyncHandler(async (req, res) => {
+    // TODO: Implement batch enqueueing logic
+})
+
 export {
     createEvent,
+    getAllEvents,
+    deleteEvent,
     editEvent,
     getSignedUrl,
+    enqueueBatch
 };

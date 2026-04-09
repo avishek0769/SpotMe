@@ -1,13 +1,14 @@
 import { Router } from "express";
 import { verifyStrictJWT } from "../middlewares/auth.middleware.js";
-import { createEvent, editEvent, getSignedUrl } from "../controllers/event.controller.js";
+import { createEvent, getAllEvents, deleteEvent, editEvent, getSignedUrl, enqueueBatch } from "../controllers/event.controller.js";
 
 const eventRouter = Router();
 
 eventRouter.route("/create").post(verifyStrictJWT, createEvent);
+eventRouter.route("/list").get(verifyStrictJWT, getAllEvents);
 eventRouter.route("/edit/:eventId").patch(verifyStrictJWT, editEvent);
-eventRouter.route("/delete").delete(verifyStrictJWT);
+eventRouter.route("/delete/:eventId").delete(verifyStrictJWT, deleteEvent);
 eventRouter.route("/signed-url/:eventId").get(verifyStrictJWT, getSignedUrl);
-eventRouter.route("/enqueue-batch").patch(verifyStrictJWT);
+eventRouter.route("/enqueue-batch").patch(verifyStrictJWT, enqueueBatch);
 
 export default eventRouter;
