@@ -94,17 +94,16 @@ const getSignedUrl = asyncHandler(async (req, res) => {
 const enqueueBatch = asyncHandler(async (req, res) => {
     const { urls, eventId } = req.body;
 
-    await Photo.bulkWrite(urls.map(url => ({
-        insertOne: {
-            document: {
-                url,
-                eventId,
-                collectionIds: []
-            }
-        }
-    })));
+    const photos = await Photo.insertMany(
+        urls.map(url => ({
+            url,
+            eventId,
+            collectionIds: []
+        })),
+        { ordered: false }
+    )
     
-    await imageQueue.add("processImages", { urls, eventId });
+    await imageQueue.add("processImages", { photos, eventId });
 
     return res.status(200).json(new ApiResponse(
         200,

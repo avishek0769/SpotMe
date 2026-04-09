@@ -8,3 +8,5 @@ npm rebuild --build-addon-from-source
 
 cd node_modules/.pnpm/@tensorflow+tfjs-node@4.22.0_seedrandom@3.0.5/node_modules/@tensorflow/tfjs-node
 npm rebuild --build-addon-from-source
+
+npm rebuild @tensorflow/tfjs-node --build-addon-from-source
