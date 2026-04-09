@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 
 const eventSchema = new Schema({
     name: {
@@ -10,12 +10,13 @@ const eventSchema = new Schema({
         required: true
     },
     userId: {
-        type: Schema.Types.ObjectId,
+        type: mongoose.Types.ObjectId,
         ref: "User",
         required: true
     },
     coverImage: {
-        type: String
+        type: mongoose.Types.ObjectId,
+        ref: "Photo"
     },
     accessLevel: {
         type: String,
@@ -35,7 +36,7 @@ const eventSchema = new Schema({
         enum: ["empty", "processing", "expired"],
         default: "empty"
     }
-}, { timestamps: true });
+});
 
 const Event = model("Event", eventSchema);
 
