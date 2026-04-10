@@ -71,26 +71,6 @@ const deleteEvent = asyncHandler(async (req, res) => {
     // TODO: Implement event deletion logic
 })
 
-const getSignedUrl = asyncHandler(async (req, res) => {
-    const { eventId } = req.params;
-
-    const { url, fields } = await createPresignedPost(s3Client, {
-        Bucket: process.env.AWS_S3_BUCKET_NAME,
-        Key: `event_images/${eventId}/` + "${filename}",
-        Conditions: [
-            ["starts-with", "$key", `event_images/${eventId}/`],
-            ["content-length-range", 0, 20 * 1024 * 1024],
-        ],
-        Expires: 3600 * 2
-    });
-
-    return res.status(200).json(new ApiResponse(
-        200,
-        { url, fields },
-        "Signed URL generated successfully"
-    ));
-});
-
 const enqueueBatch = asyncHandler(async (req, res) => {
     const { urls, eventId } = req.body;
 
@@ -117,6 +97,5 @@ export {
     getAllEvents,
     deleteEvent,
     editEvent,
-    getSignedUrl,
     enqueueBatch
 };

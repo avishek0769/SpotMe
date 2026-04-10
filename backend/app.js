@@ -29,6 +29,9 @@ app.use("/api/v1/user", userRouter);
 import eventRouter from "./routers/event.route.js";
 app.use("/api/v1/event", eventRouter);
 
+import photoRouter from "./routers/photo.route.js";
+app.use("/api/v1/photo", photoRouter);
+
 app.use(errorHandler);
 
 export { app };
