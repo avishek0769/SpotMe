@@ -5,6 +5,7 @@ import { QdrantClient } from "@qdrant/js-client-rest"
 import fs from "fs/promises";
 import faceapi from "@vladmandic/face-api"
 import canvas from "canvas"
+import { v4 as uuidv4 } from 'uuid';
 
 const { Canvas, Image, ImageData } = canvas;
 
@@ -23,7 +24,7 @@ const qdrant = new QdrantClient({
 
 async function indexFacesInImage(imagePath, photoId) {
     const img = await canvas.loadImage(imagePath)
-    const c = canvas.createCanvas(img.width*2, img.height*2)
+    const c = canvas.createCanvas(img.width * 2, img.height * 2)
     const ctx = c.getContext("2d");
     ctx.drawImage(img, 0, 0, c.width, c.height);
 
@@ -31,8 +32,8 @@ async function indexFacesInImage(imagePath, photoId) {
         maxResults: 30,
         minConfidence: 0.4
     }))
-    .withFaceLandmarks()
-    .withFaceDescriptors();
+        .withFaceLandmarks()
+        .withFaceDescriptors();
 
     return detections.map(detection => {
         const { descriptor } = detection;
@@ -42,29 +43,62 @@ async function indexFacesInImage(imagePath, photoId) {
 
 async function processImages(photos, eventId) {
     console.log("Processing Images")
+    const dirPath = `images/${eventId}`
+    await fs.mkdir(dirPath, { recursive: true });
 
-    const results = await Promise.allSettled(photos.map(async (photo) => {
-        const res = await fetch(photo.url)
-        const blob = await res.blob();
+    try {
+        const results = await Promise.allSettled(
+            photos.map(async (photo) => {
+                const res = await fetch(photo.url)
+                const blob = await res.blob();
 
-        await fs.mkdir(`images/${eventId}`, { recursive: true });
-        const imageName = `images/${eventId}/${photo._id}-${photo.url.split('/').pop()}`;
-        await fs.writeFile(imageName, Buffer.from(await blob.arrayBuffer()), "binary");
+                const imageName = `${dirPath}/${photo.url.split("/").pop()}`;
+                await fs.writeFile(imageName, Buffer.from(await blob.arrayBuffer()), "binary");
 
-        const faces = await indexFacesInImage(imageName, photo._id);
-        await fs.unlink(imageName);
+                const faces = await indexFacesInImage(imageName, photo._id);
+                await fs.unlink(imageName);
 
-        return faces;
-    }))
-    
-    const allFaces = results
-        .filter(r => r.status === "fulfilled")
-        .flatMap(r => r.value)
+                return faces;
+            })
+        )
 
-    console.log(allFaces)
+        const allFaces = results
+            .filter(r => r.status === "fulfilled")
+            .flatMap(r => r.value)
+
+        await qdrant.upsert(`Event_${eventId}`, {
+            wait: true,
+            points: allFaces.map(face => ({
+                id: uuidv4(),
+                vector: Array.from(face.embeddings),
+                payload: { photoId: face.photoId }
+            }))
+        });
+
+        console.log("Finished processing batch of images")
+    }
+    catch (error) {
+        console.error("Error processing images:", error);
+    }
+    finally {
+        await fs.rm(dirPath, { recursive: true });
+    }
 }
 
 new Worker("imageQueue", async job => {
     const { photos, eventId } = job.data;
+
+    const collections = await qdrant.getCollections();
+    const exists = collections.collections.some(c => c.name === `Event_${eventId}`);
+
+    if (!exists) {
+        await qdrant.createCollection(`Event_${eventId}`, {
+            vectors: {
+                size: 128,
+                distance: "Cosine",
+            },
+        });
+    }
+
     await processImages(photos, eventId);
 }, { connection: redis });
