@@ -1,10 +1,26 @@
 import Event from "../models/event.model.js";
 import Photo from "../models/photo.model.js";
+import Guest from "../models/guest.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import mongoose from "mongoose";
 import { Queue } from "bullmq";
+import { S3Client, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
+import { QdrantClient } from "@qdrant/js-client-rest";
+
+const s3 = new S3Client({
+    region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+});
+
+const qdrant = new QdrantClient({
+    url: process.env.QDRANT_URL,
+    apiKey: process.env.QDRANT_API_KEY
+})
 
 const imageQueue = new Queue("imageQueue");
 
@@ -58,7 +74,42 @@ const editEvent = asyncHandler(async (req, res) => {
 });
 
 const deleteEvent = asyncHandler(async (req, res) => {
-    // TODO: Implement event deletion logic
+    const { eventId } = req.params;
+
+    let continuationToken = null;
+    do {
+        const listCommand = new ListObjectsV2Command({
+            Bucket: process.env.AWS_S3_BUCKET_NAME,
+            Prefix: `event_images/${eventId}/`,
+            ContinuationToken: continuationToken
+        });
+        const listResponse = await s3.send(listCommand);
+
+        if (listResponse.Contents?.length > 0) {
+            const deleteCommand = new DeleteObjectsCommand({
+                Bucket: process.env.AWS_S3_BUCKET_NAME,
+                Delete: {
+                    Objects: listResponse.Contents.map(obj => ({ Key: obj.Key })),
+                    Quiet: true
+                }
+            });
+            continuationToken = listResponse.NextContinuationToken;
+            await s3.send(deleteCommand);
+        }
+    } while (continuationToken);
+
+    await Promise.all([
+        Event.findByIdAndDelete(eventId),
+        Photo.deleteMany({ eventId }),
+        Guest.deleteMany({ eventId }),
+        qdrant.deleteCollection(`Event_${eventId}`).catch(() => {}) 
+    ]);
+
+    return res.status(200).json(new ApiResponse(
+        200,
+        null,
+        "Event and associated photos and guests deleted successfully"
+    ));
 })
 
 const enqueueBatch = asyncHandler(async (req, res) => {
@@ -72,7 +123,7 @@ const enqueueBatch = asyncHandler(async (req, res) => {
         })),
         { ordered: false }
     )
-    
+
     await imageQueue.add("processImages", { photos, eventId });
 
     return res.status(200).json(new ApiResponse(
@@ -101,5 +152,7 @@ export {
     deleteEvent,
     editEvent,
     enqueueBatch,
-    getDetails
+    getDetails,
+    getAllPhotos,
+    getAllGuests
 };
