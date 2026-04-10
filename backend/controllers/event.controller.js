@@ -146,6 +146,32 @@ const getDetails = asyncHandler(async (req, res) => {
     );
 })
 
+const getAllPhotos = asyncHandler(async (req, res) => {
+    const { eventId } = req.params;
+    const { page = 0, limit = 0 } = req.query;
+
+    const photos = await Photo.find({ eventId })
+        .skip(parseInt(page) * parseInt(limit))
+        .limit(parseInt(limit));
+
+    return res.status(200).json(new ApiResponse(
+        200,
+        photos,
+        "Photos fetched successfully"
+    ));
+})
+
+const getAllGuests = asyncHandler(async (req, res) => {
+    const { eventId } = req.params;
+    const guests = await Guest.find({ eventId });
+
+    return res.status(200).json(new ApiResponse(
+        200,
+        guests,
+        "Guests fetched successfully"
+    ));
+})
+
 export {
     createEvent,
     getAllEvents,
