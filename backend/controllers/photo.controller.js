@@ -1,9 +1,11 @@
 import Photo from "../models/photo.model.js";
+import Event from "../models/event.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { ApiError } from "../utils/ApiError.js";
 import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import archiver from "archiver";
 import { QdrantClient } from "@qdrant/js-client-rest"
 
@@ -14,6 +16,11 @@ const s3 = new S3Client({
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
     }
 });
+
+const qdrant = new QdrantClient({
+    url: process.env.QDRANT_URL,
+    apiKey: process.env.QDRANT_API_KEY
+})
 
 const getSignedUrlForEvent = asyncHandler(async (req, res) => {
     const { eventId } = req.params;
@@ -106,9 +113,50 @@ const downloadAll = asyncHandler(async (req, res) => {
     archive.finalize();
 })
 
+const deletePhoto = asyncHandler(async (req, res) => {
+    const { eventId } = req.params;
+    const { fileNames, photoIds } = req.body;
+
+    const event = await Event.findById(eventId);
+    if (event?.userId.toString() !== req.user._id.toString()) {
+        throw new ApiError(404, "User not authorized to delete photos of this event");
+    }
+
+    if (fileNames?.length > 0) {
+        const deleteParams = {
+            Bucket: process.env.AWS_S3_BUCKET_NAME,
+            Delete: {
+                Objects: fileNames.map(name => ({ Key: `event_images/${eventId}/${name}` })),
+                Quiet: true,
+            },
+        };
+        await s3.send(new DeleteObjectsCommand(deleteParams));
+    }
+
+    await Photo.deleteMany({ _id: { $in: photoIds } });
+    await qdrant.delete(`Event_${eventId}`, {
+        wait: true,
+        filter: {
+            must: [{
+                key: "photoId",
+                match: {
+                    any: photoIds
+                }
+            }]
+        }
+    });
+
+    return res.status(200).json(new ApiResponse(
+        200,
+        null,
+        "All photos deleted successfully"
+    ));
+})
+
 export {
     getSignedUrlForEvent,
     getSignedUrlForSelfie,
     downloadSelected,
-    downloadAll
+    downloadAll,
+    deletePhoto
 }
