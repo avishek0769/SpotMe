@@ -32,9 +32,9 @@ async function indexFacesInImage(imagePath, photoId) {
         maxResults: 30,
         minConfidence: 0.4
     }))
-    .withFaceLandmarks()
-    .withFaceDescriptors();
-    
+        .withFaceLandmarks()
+        .withFaceDescriptors();
+
     return detections.map(detection => {
         const { descriptor } = detection;
         return { embeddings: descriptor, photoId };
@@ -68,7 +68,7 @@ async function processImages(photos, eventId) {
 
         if (allFaces.length === 0) {
             console.log("No faces detected in this batch. Skipping Qdrant upsert.");
-            return; 
+            return;
         }
 
         await qdrant.upsert(`Event_${eventId}`, {
@@ -102,6 +102,11 @@ new Worker("imageQueue", async job => {
                 size: 128,
                 distance: "Cosine",
             },
+        });
+        await qdrant.createPayloadIndex(`Event_${eventId}`, {
+            field_name: "photoId",
+            field_schema: "keyword",
+            wait: true
         });
     }
 
