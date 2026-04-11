@@ -69,6 +69,44 @@ const getSignedUrlForSelfie = asyncHandler(async (req, res) => {
     ));
 });
 
+const createSelfie = asyncHandler(async (req, res) => {
+    const { eventId } = req.params;
+    const { urls } = req.body;
+
+    let collection = await Collection.find({
+        eventId,
+        userId: req.user._id
+    });
+    if (!collection) {
+        collection = await Collection.create({
+            eventId,
+            userId: req.user._id
+        });
+    }
+
+    const createdPhotos = await Photo.insertMany(
+        urls.map(url => ({
+            url,
+            eventId,
+            collectionIds: [collection._id]
+        }))
+    );
+
+    await Collection.findByIdAndUpdate(collection._id, {
+        $addToSet: {
+            selfies: {
+                $each: createdPhotos.map(photo => photo._id)
+            }
+        }
+    });
+
+    return res.status(201).json(new ApiResponse(
+        201,
+        createdPhotos,
+        "Selfies added to collection successfully"
+    ));
+})
+
 const downloadSelected = asyncHandler(async (req, res) => {
     const { fileNames } = req.body;
     const { eventId } = req.params;
@@ -162,10 +200,39 @@ const deletePhoto = asyncHandler(async (req, res) => {
     ));
 })
 
+const deleteSelfie = asyncHandler(async (req, res) => {
+    const { collectionId } = req.params;
+    const { fileNames, photoIds } = req.body;
+    const collection = await Collection.findById(collectionId);
+
+    if (collection?.userId.toString() !== req.user._id.toString()) {
+        throw new ApiError(404, "User not authorized to delete selfies of this collection");
+    }
+
+    const deleteParams = {
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Delete: {
+            Objects: fileNames.map(name => ({ Key: `selfies/${collectionId}/${name}` })),
+            Quiet: true,
+        },
+    };
+    await s3.send(new DeleteObjectsCommand(deleteParams));
+
+    const deleted = await Photo.deleteMany({ _id: { $in: photoIds } });
+
+    return res.status(200).json(new ApiResponse(
+        200,
+        { deletedCount: deleted.deletedCount },
+        "All selfies deleted successfully"
+    ));
+})
+
 export {
     getSignedUrlForEvent,
     getSignedUrlForSelfie,
     downloadSelected,
     downloadAll,
     deletePhoto,
+    deleteSelfie,
+    createSelfie
 }
