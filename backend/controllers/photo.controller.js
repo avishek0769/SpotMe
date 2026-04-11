@@ -1,11 +1,12 @@
 import Photo from "../models/photo.model.js";
 import Event from "../models/event.model.js";
+import Collection from "../models/collection.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { S3Client, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand, DeleteObjectsCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import archiver from "archiver";
 import { QdrantClient } from "@qdrant/js-client-rest"
 
@@ -44,21 +45,29 @@ const getSignedUrlForEvent = asyncHandler(async (req, res) => {
 
 const getSignedUrlForSelfie = asyncHandler(async (req, res) => {
     const { collectionId } = req.params;
-    const { filename } = req.query;
+    const { filenames } = req.body;
 
-    const getObjectCommand = new GetObjectCommand({
-        Bucket: process.env.AWS_S3_BUCKET_NAME,
-        Key: `selfies/${collectionId}/${filename}`
+    if (!filenames || !Array.isArray(filenames) || filenames.length > 3) {
+        throw new ApiError(400, "Maximum 3 selfies allowed per collection");
+    }
+
+    const urlPromises = filenames.map((filename) => {
+        const command = new PutObjectCommand({
+            Bucket: process.env.AWS_S3_BUCKET_NAME,
+            Key: `selfies/${collectionId}/${filename}`,
+        });
+
+        return getSignedUrl(s3, command, { expiresIn: 3600 });
     });
 
-    const signedUrl = await getSignedUrl(s3, getObjectCommand, { expiresIn: 3600 });
+    const signedUrls = await Promise.all(urlPromises);
 
     return res.status(200).json(new ApiResponse(
         200,
-        { url: signedUrl },
-        "Signed URL generated successfully"
+        { urls: signedUrls },
+        "Signed URLs generated successfully"
     ));
-})
+});
 
 const downloadSelected = asyncHandler(async (req, res) => {
     const { fileNames } = req.body;
@@ -133,7 +142,7 @@ const deletePhoto = asyncHandler(async (req, res) => {
         await s3.send(new DeleteObjectsCommand(deleteParams));
     }
 
-    await Photo.deleteMany({ _id: { $in: photoIds } });
+    const deleted = await Photo.deleteMany({ _id: { $in: photoIds } });
     await qdrant.delete(`Event_${eventId}`, {
         wait: true,
         filter: {
@@ -148,7 +157,7 @@ const deletePhoto = asyncHandler(async (req, res) => {
 
     return res.status(200).json(new ApiResponse(
         200,
-        null,
+        { deletedCount: deleted.deletedCount },
         "All photos deleted successfully"
     ));
 })
@@ -158,5 +167,5 @@ export {
     getSignedUrlForSelfie,
     downloadSelected,
     downloadAll,
-    deletePhoto
+    deletePhoto,
 }
