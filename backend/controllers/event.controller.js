@@ -113,7 +113,8 @@ const deleteEvent = asyncHandler(async (req, res) => {
 })
 
 const enqueueBatch = asyncHandler(async (req, res) => {
-    const { urls, eventId } = req.body;
+    const { urls } = req.body;
+    const { eventId } = req.params;
 
     const photos = await Photo.insertMany(
         urls.map(url => ({

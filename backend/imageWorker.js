@@ -32,9 +32,9 @@ async function indexFacesInImage(imagePath, photoId) {
         maxResults: 30,
         minConfidence: 0.4
     }))
-        .withFaceLandmarks()
-        .withFaceDescriptors();
-
+    .withFaceLandmarks()
+    .withFaceDescriptors();
+    
     return detections.map(detection => {
         const { descriptor } = detection;
         return { embeddings: descriptor, photoId };
@@ -50,10 +50,10 @@ async function processImages(photos, eventId) {
         const results = await Promise.allSettled(
             photos.map(async (photo) => {
                 const res = await fetch(photo.url)
-                const blob = await res.blob();
+                const arrayBuffer = await res.arrayBuffer();
 
                 const imageName = `${dirPath}/${photo.url.split("/").pop()}`;
-                await fs.writeFile(imageName, Buffer.from(await blob.arrayBuffer()), "binary");
+                await fs.writeFile(imageName, Buffer.from(arrayBuffer));
 
                 const faces = await indexFacesInImage(imageName, photo._id);
                 await fs.unlink(imageName);
@@ -63,8 +63,13 @@ async function processImages(photos, eventId) {
         )
 
         const allFaces = results
-            .filter(r => r.status === "fulfilled")
+            .filter(r => r.status === "fulfilled" && r.value?.length > 0)
             .flatMap(r => r.value)
+
+        if (allFaces.length === 0) {
+            console.log("No faces detected in this batch. Skipping Qdrant upsert.");
+            return; 
+        }
 
         await qdrant.upsert(`Event_${eventId}`, {
             wait: true,

@@ -11,6 +11,6 @@ eventRouter.route("/all-photos/:eventId").get(verifyStrictJWT, getAllPhotos);
 eventRouter.route("/all-guests/:eventId").get(verifyStrictJWT, getAllGuests);
 eventRouter.route("/edit/:eventId").patch(verifyStrictJWT, editEvent);
 eventRouter.route("/delete/:eventId").delete(verifyStrictJWT, deleteEvent);
-eventRouter.route("/enqueue-batch").post(verifyStrictJWT, enqueueBatch);
+eventRouter.route("/enqueue-batch/:eventId").post(verifyStrictJWT, enqueueBatch);
 
 export default eventRouter;
