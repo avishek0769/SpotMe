@@ -146,7 +146,10 @@ const getAllPhotos = asyncHandler(async (req, res) => {
     const { eventId } = req.params;
     const { page = 0, limit = 0 } = req.query;
 
-    const photos = await Photo.find({ eventId })
+    const photos = await Photo.find({
+        eventId,
+        type: "event"
+    })
         .skip(parseInt(page) * parseInt(limit))
         .limit(parseInt(limit));
 
