@@ -9,11 +9,7 @@ const photoSchema = new Schema({
     url: {
         type: String,
         required: true
-    },
-    collectionIds: [{
-        type: mongoose.Types.ObjectId,
-        ref: "collections"
-    }]
+    }
 }, { timestamps: true });
 
 const Photo = model("Photo", photoSchema);

@@ -10,6 +10,7 @@ import { S3Client, GetObjectCommand, DeleteObjectsCommand, PutObjectCommand } fr
 import archiver from "archiver";
 import qdrant from "../utils/qdrant.js";
 import { v4 as uuidv4 } from 'uuid';
+import mongoose, { Schema } from "mongoose";
 
 const s3 = new S3Client({
     region: process.env.AWS_REGION,
@@ -96,8 +97,7 @@ const createSelfie = asyncHandler(async (req, res) => {
     const createdPhotos = await Photo.insertMany(
         urls.map(url => ({
             url,
-            eventId,
-            collectionIds: [collection._id]
+            eventId
         }))
     );
 
@@ -145,10 +145,20 @@ const downloadAll = asyncHandler(async (req, res) => {
 
     let allPhotos;
     if (collectionId) {
-        allPhotos = await Photo.find({
-            $in: { collectionIds: collectionId },
-            eventId
-        });
+        allPhotos = await Collection.aggregate([
+            { $match: { _id: new mongoose.Types.ObjectId(collectionId) } },
+            { $unwind: "$myPhotos" },
+            {
+                $lookup: {
+                    from: "photos",
+                    localField: "myPhotos",
+                    foreignField: "_id",
+                    as: "photoDetails"
+                }
+            },
+            { $unwind: "$photoDetails" },
+            { $replaceRoot: { newRoot: "$photoDetails" } }
+        ]);
     }
     else {
         allPhotos = await Photo.find({ eventId });

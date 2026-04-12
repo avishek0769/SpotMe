@@ -114,8 +114,7 @@ const enqueueBatch = asyncHandler(async (req, res) => {
     const photos = await Photo.insertMany(
         urls.map(url => ({
             url,
-            eventId,
-            collectionIds: []
+            eventId
         })),
         { ordered: false }
     )
