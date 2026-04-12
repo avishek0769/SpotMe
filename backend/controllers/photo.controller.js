@@ -9,6 +9,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { S3Client, GetObjectCommand, DeleteObjectsCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import archiver from "archiver";
 import qdrant from "../utils/qdrant.js";
+import { v4 as uuidv4 } from 'uuid';
 
 const s3 = new S3Client({
     region: process.env.AWS_REGION,
@@ -39,17 +40,23 @@ const getSignedUrlForEvent = asyncHandler(async (req, res) => {
 });
 
 const getSignedUrlForSelfie = asyncHandler(async (req, res) => {
-    const { collectionId } = req.params;
-    const { filenames } = req.body;
+    let { fileCount, eventId } = req.query;
 
-    if (!filenames || !Array.isArray(filenames) || filenames.length > 3) {
-        throw new ApiError(400, "Maximum 3 selfies allowed per collection");
+    fileCount = parseInt(fileCount);
+    if (!fileCount || fileCount < 1 || fileCount > 3) {
+        throw new ApiError(400, "Invalid file count. Please specify a number between 1 and 3.");
     }
 
-    const urlPromises = filenames.map((filename) => {
+    const collection = await Collection.findOne({ userId: req.user._id, eventId });
+
+    if (collection.selfies.length + fileCount > 3) {
+        throw new ApiError(400, `Selfie upload limit exceeded. You can upload a maximum of 3 selfies. You have already uploaded ${collection.selfies.length} selfie(s).`);
+    }
+
+    const urlPromises = Array.from({ length: fileCount }, () => {
         const command = new PutObjectCommand({
             Bucket: process.env.AWS_S3_BUCKET_NAME,
-            Key: `selfies/${collectionId}/${filename}`,
+            Key: `selfies/${uuidv4()}}`,
         });
 
         return getSignedUrl(s3, command, { expiresIn: 3600 });
@@ -68,10 +75,17 @@ const createSelfie = asyncHandler(async (req, res) => {
     const { eventId } = req.params;
     const { urls } = req.body;
 
-    let collection = await Collection.find({
+    if (urls.length > 3) {
+        throw new ApiError(400, "You can upload a maximum of 3 selfies at a time.");
+    }
+
+    let collection = await Collection.findOne({
         eventId,
         userId: req.user._id
     });
+    if (collection?.selfies?.length >= 3) {
+        throw new ApiError(400, `Selfie upload limit exceeded. You can upload a maximum of 3 selfies. You have already uploaded ${collection.selfies.length} selfie(s).`);
+    }
     if (!collection) {
         collection = await Collection.create({
             eventId,
@@ -87,17 +101,21 @@ const createSelfie = asyncHandler(async (req, res) => {
         }))
     );
 
-    await Collection.findByIdAndUpdate(collection._id, {
-        $addToSet: {
-            selfies: {
-                $each: createdPhotos.map(photo => photo._id)
+    collection = await Collection.findByIdAndUpdate(
+        collection._id,
+        {
+            $addToSet: {
+                selfies: {
+                    $each: createdPhotos.map(photo => photo._id)
+                }
             }
-        }
-    });
+        },
+        { new: true }
+    );
 
     return res.status(201).json(new ApiResponse(
         201,
-        createdPhotos,
+        { photos: createdPhotos, collection },
         "Selfies added to collection successfully"
     ));
 })

@@ -5,7 +5,7 @@ import { getSignedUrlForEvent, getSignedUrlForSelfie, createSelfie, downloadAll,
 const photoRouter = Router();
 
 photoRouter.route("/signed-url/event/:eventId").get(verifyStrictJWT, getSignedUrlForEvent);
-photoRouter.route("/signed-url/selfie/:collectionId").get(verifyStrictJWT, getSignedUrlForSelfie); // Test
+photoRouter.route("/signed-url/selfie").get(verifyStrictJWT, getSignedUrlForSelfie); // Test
 photoRouter.route("/create/selfie/:eventId").post(verifyStrictJWT, createSelfie); // Test
 photoRouter.route("/download/selected/:eventId").post(verifyStrictJWT, downloadSelected);
 photoRouter.route("/download/all/event/:eventId").get(verifyStrictJWT, downloadAll);
