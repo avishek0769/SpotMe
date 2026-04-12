@@ -1,11 +1,11 @@
 import "dotenv/config";
 import { Worker } from "bullmq";
 import redis from "./utils/redis.js";
-import { QdrantClient } from "@qdrant/js-client-rest"
 import fs from "fs/promises";
 import faceapi from "@vladmandic/face-api"
 import canvas from "canvas"
 import { v4 as uuidv4 } from 'uuid';
+import qdrant from "./utils/qdrant.js";
 
 const { Canvas, Image, ImageData } = canvas;
 
@@ -17,12 +17,7 @@ await Promise.all([
     faceapi.nets.faceRecognitionNet.loadFromDisk("./lightweight_models"),
 ])
 
-const qdrant = new QdrantClient({
-    url: process.env.QDRANT_URL,
-    apiKey: process.env.QDRANT_API_KEY
-})
-
-async function indexFacesInImage(imagePath, photoId) {
+export async function indexFacesInImage(imagePath, photoId) {
     const img = await canvas.loadImage(imagePath)
     const c = canvas.createCanvas(img.width * 2, img.height * 2)
     const ctx = c.getContext("2d");

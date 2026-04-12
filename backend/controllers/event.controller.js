@@ -7,7 +7,7 @@ import { ApiError } from "../utils/ApiError.js";
 import mongoose from "mongoose";
 import { Queue } from "bullmq";
 import { S3Client, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
-import { QdrantClient } from "@qdrant/js-client-rest";
+import qdrant from "../utils/qdrant.js";
 
 const s3 = new S3Client({
     region: process.env.AWS_REGION,
@@ -16,11 +16,6 @@ const s3 = new S3Client({
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     },
 });
-
-const qdrant = new QdrantClient({
-    url: process.env.QDRANT_URL,
-    apiKey: process.env.QDRANT_API_KEY
-})
 
 const imageQueue = new Queue("imageQueue");
 

@@ -8,7 +8,7 @@ import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { S3Client, GetObjectCommand, DeleteObjectsCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import archiver from "archiver";
-import { QdrantClient } from "@qdrant/js-client-rest"
+import qdrant from "../utils/qdrant.js";
 
 const s3 = new S3Client({
     region: process.env.AWS_REGION,
@@ -17,11 +17,6 @@ const s3 = new S3Client({
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
     }
 });
-
-const qdrant = new QdrantClient({
-    url: process.env.QDRANT_URL,
-    apiKey: process.env.QDRANT_API_KEY
-})
 
 const getSignedUrlForEvent = asyncHandler(async (req, res) => {
     const { eventId } = req.params;
