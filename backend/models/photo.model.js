@@ -9,6 +9,10 @@ const photoSchema = new Schema({
     url: {
         type: String,
         required: true
+    },
+    type: {
+        type: String,
+        enum: ["selfie", "event"],
     }
 }, { timestamps: true });
 

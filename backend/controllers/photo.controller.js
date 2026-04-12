@@ -97,7 +97,8 @@ const createSelfie = asyncHandler(async (req, res) => {
     const createdPhotos = await Photo.insertMany(
         urls.map(url => ({
             url,
-            eventId
+            eventId,
+            type: "selfie"
         }))
     );
 
@@ -235,7 +236,7 @@ const deleteSelfie = asyncHandler(async (req, res) => {
     const deleteParams = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
         Delete: {
-            Objects: fileNames.map(name => ({ Key: `selfies/${collectionId}/${name}` })),
+            Objects: fileNames.map(name => ({ Key: `selfies/${name}` })),
             Quiet: true,
         },
     };
