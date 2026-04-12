@@ -165,6 +165,10 @@ const downloadAll = asyncHandler(async (req, res) => {
         allPhotos = await Photo.find({ eventId });
     }
 
+    if (allPhotos.length === 0) {
+        throw new ApiError(404, "No photos found for the given event/collection");
+    }
+
     const allFileKeys = allPhotos.map(photo => photo.url.split("/").pop())
 
     const archive = archiver("zip", { zlib: { level: 5 } })
@@ -205,6 +209,10 @@ const deletePhoto = asyncHandler(async (req, res) => {
     }
 
     const deleted = await Photo.deleteMany({ _id: { $in: photoIds } });
+    await Collection.updateMany(
+        { eventId, myPhotos: { $in: photoIds } },
+        { $pull: { myPhotos: { $in: photoIds } } }
+    );
     await qdrant.delete(`Event_${eventId}`, {
         wait: true,
         filter: {
@@ -243,6 +251,11 @@ const deleteSelfie = asyncHandler(async (req, res) => {
     await s3.send(new DeleteObjectsCommand(deleteParams));
 
     const deleted = await Photo.deleteMany({ _id: { $in: photoIds } });
+    await Collection.findByIdAndUpdate(collectionId, {
+        $pull: {
+            selfies: { $in: photoIds },
+        }
+    });
 
     return res.status(200).json(new ApiResponse(
         200,
