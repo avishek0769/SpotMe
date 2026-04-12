@@ -32,6 +32,9 @@ app.use("/api/v1/event", eventRouter);
 import photoRouter from "./routers/photo.route.js";
 app.use("/api/v1/photo", photoRouter);
 
+import collectionRouter from "./routers/collection.route.js";
+app.use("/api/v1/collection", collectionRouter);
+
 app.use(errorHandler);
 
 export { app };
