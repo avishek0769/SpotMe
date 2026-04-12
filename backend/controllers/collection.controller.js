@@ -1,5 +1,6 @@
 import Photo from "../models/photo.model.js";
 import Guest from "../models/guest.model.js";
+import Event from "../models/event.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -90,7 +91,7 @@ const findMatch = asyncHandler(async (req, res) => {
         .map(r => r.result)
 
     const filteredResultPhotoIds = filteredResults.map(r => r.payload.photoId)
-    
+
     const photosMatched = await Photo.find({
         _id: { $in: filteredResultPhotoIds }
     }).select("-type -eventId -createdAt -updatedAt");
@@ -109,6 +110,53 @@ const findMatch = asyncHandler(async (req, res) => {
     return res.json(new ApiResponse(200, photosMatched, "Match found"))
 })
 
+const removePhoto = asyncHandler(async (req, res) => {
+    const { collectionId } = req.params;
+    const { photoIds } = req.body;
+
+    if (!photoIds || !Array.isArray(photoIds) || photoIds.length === 0) {
+        throw new ApiError(400, "photoIds must be a non-empty array");
+    }
+
+    await Collection.findOneAndUpdate(
+        { _id: collectionId, userId: req.user._id }, {
+        $pull: {
+            myPhotos: {
+                $in: photoIds
+            }
+        }
+    });
+
+    return res.json(new ApiResponse(200, null, "Photos removed from collection"))
+})
+
+const addPhoto = asyncHandler(async (req, res) => {
+    const { collectionId } = req.params;
+    const { photoIds, eventId } = req.body;
+
+    if (!photoIds || !Array.isArray(photoIds) || photoIds.length === 0) {
+        throw new ApiError(400, "photoIds must be a non-empty array");
+    }
+
+    const event = await Event.findById(eventId);
+    if (event.userId.toString() !== req.user._id.toString()) {
+        throw new ApiError(404, "Only the event owner can add photos to this collection");
+    }
+
+    await Collection.findByIdAndUpdate(collectionId, {
+        $addToSet: {
+            myPhotos: {
+                $each: photoIds
+            }
+        }
+    });
+
+    return res.json(new ApiResponse(200, null, "Photos added to collection"))
+
+})
+
 export {
-    findMatch
+    findMatch,
+    removePhoto,
+    addPhoto
 };
