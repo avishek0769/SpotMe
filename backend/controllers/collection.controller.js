@@ -9,6 +9,7 @@ import qdrant from "../utils/qdrant.js";
 import Collection from "../models/collection.model.js";
 import { v4 as uuidv4 } from 'uuid';
 import fs from "fs/promises";
+import mongoose from "mongoose";
 
 const findMatch = asyncHandler(async (req, res) => {
     const { eventId } = req.params;
@@ -155,8 +156,71 @@ const addPhoto = asyncHandler(async (req, res) => {
 
 })
 
+const getAllPhotos = asyncHandler(async (req, res) => {
+    const { collectionId } = req.params;
+    const { page, limit } = req.query;
+
+    const collection = await Collection.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(collectionId),
+                userId: req.user._id
+            }
+        },
+        {
+            $lookup: {
+                from: "photos",
+                localField: "myPhotos",
+                foreignField: "_id",
+                as: "myPhotos",
+                pipeline: [
+                    { $project: { url: 1 } },
+                    { $skip: Number(page) * Number(limit) },
+                    { $limit: Number(limit) }
+                ]
+            }
+        },
+        {
+            $unset: ["selfies"]
+        }
+    ]);
+
+    return res.json(new ApiResponse(200, collection, "Photos retrieved"))
+})
+
+const getAllSelfies = asyncHandler(async (req, res) => {
+    const { collectionId } = req.params;
+
+    const collection = await Collection.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(collectionId),
+                userId: req.user._id
+            }
+        },
+        {
+            $lookup: {
+                from: "photos",
+                localField: "selfies",
+                foreignField: "_id",
+                as: "selfies",
+                pipeline: [
+                    { $project: { url: 1 } }
+                ]
+            }
+        },
+        {
+            $unset: ["myPhotos"]
+        }
+    ]);
+
+    return res.json(new ApiResponse(200, collection, "Selfies retrieved"))
+})
+
 export {
     findMatch,
     removePhoto,
-    addPhoto
+    addPhoto,
+    getAllPhotos,
+    getAllSelfies
 };
