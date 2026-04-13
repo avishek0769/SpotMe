@@ -220,7 +220,7 @@ export function DashboardPage() {
                 )}
             </section>
 
-            {/* ═══ Create Event Modal ═══ */}
+            {/*  Create Event Modal  */}
             {showModal && (
                 <div className="modal-backdrop">
                     <div className="card" style={{ width: "100%", maxWidth: 440, padding: "1.75rem" }}>

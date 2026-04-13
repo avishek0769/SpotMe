@@ -34,7 +34,6 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
-                    {/* Guest routes - sharable link uses /event/:id (backend pattern) */}
                     <Route path="/event/:id" element={<GuestEventPage />} />
                     <Route
                         path="/events/:id/guest/collection"

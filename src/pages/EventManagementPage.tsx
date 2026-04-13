@@ -138,9 +138,7 @@ export function EventManagementPage() {
 
     if (notFound || !event) return <Navigate to="/dashboard" replace />;
 
-    const guestLink = `${window.location.origin}/event/${event._id}`;
-
-    // ─── Upload handler ───
+    //  Upload handler 
     async function handleFiles(files: FileList | null) {
         if (!files?.length || !id) return;
         const fileArr = Array.from(files);
@@ -174,7 +172,7 @@ export function EventManagementPage() {
         handleFiles(e.dataTransfer.files);
     }
 
-    // ─── Photo selection ───
+    //  Photo selection 
     function togglePhoto(photo: PhotoData) {
         setSelectedPhotos((prev) =>
             prev.find((p) => p._id === photo._id)
@@ -213,7 +211,7 @@ export function EventManagementPage() {
         window.setTimeout(() => setDownloadToast(""), 1800);
     }
 
-    // ─── Guest collection ───
+    //  Guest collection 
     async function loadGuestCollection(guest: GuestData) {
         if (expandedGuest?._id === guest._id) {
             setExpandedGuest(null);
@@ -332,7 +330,7 @@ export function EventManagementPage() {
         }
     }
 
-    // ─── Settings ───
+    //  Settings 
     async function saveSettings() {
         if (!id) return;
         setSettingsSaving(true);
@@ -371,12 +369,12 @@ export function EventManagementPage() {
     }
 
     function copyLink() {
-        navigator.clipboard?.writeText(guestLink);
+        navigator.clipboard?.writeText(event?.sharableLink || "");
         setCopiedLink(true);
         setTimeout(() => setCopiedLink(false), 1500);
     }
 
-    // ─── Access level update ───
+    //  Access level update 
     async function handleAccessChange(level: "spot" | "browse") {
         if (!id) return;
         try {
@@ -398,7 +396,7 @@ export function EventManagementPage() {
     return (
         <>
             <div className="page-wrap">
-            {/* Breadcrumb */}
+            
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                 <Link to="/dashboard" style={{ fontSize: "0.8125rem", color: "var(--accent-hover)", textDecoration: "none" }}>
                     ← Dashboard
@@ -411,7 +409,6 @@ export function EventManagementPage() {
                 </span>
             </div>
 
-            {/* Event Header */}
             <div className="card" style={{ padding: "1.5rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
                     <div>
@@ -441,11 +438,11 @@ export function EventManagementPage() {
                 </div>
             </div>
 
-            {/* Alerts */}
+            
             {error && <div className="alert alert-error" style={{ marginTop: 12 }}>{error} <button onClick={() => setError("")} style={{ float: "right", background: "none", border: "none", color: "inherit", cursor: "pointer" }}>✕</button></div>}
             {success && <div className="alert alert-success" style={{ marginTop: 12 }}>{success}</div>}
 
-            {/* Tabs */}
+            
             <div style={{ marginTop: 16, overflowX: "auto" }}>
                 <div className="tab-bar">
                     {tabs.map((t) => (
@@ -458,7 +455,6 @@ export function EventManagementPage() {
                 </div>
             </div>
 
-            {/* ═══ PHOTOS TAB ═══ */}
             {activeTab === "photos" && (
                 <section className="card" style={{ marginTop: 16, padding: "1.5rem" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
@@ -482,7 +478,7 @@ export function EventManagementPage() {
                         </div>
                     </div>
 
-                    {/* Upload Zone */}
+                    
                     <div
                         onDrop={onDrop} onDragOver={(e) => e.preventDefault()}
                         style={{
@@ -503,7 +499,7 @@ export function EventManagementPage() {
                         <input ref={uploadRef} type="file" multiple accept="image/*" onChange={onFileChange} style={{ display: "none" }} />
                     </div>
 
-                    {/* Upload Progress */}
+                    
                     {uploadPhase === "uploading" && (
                         <div style={{ marginTop: 12 }}>
                             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
@@ -521,7 +517,7 @@ export function EventManagementPage() {
                         </div>
                     )}
 
-                    {/* Photo Grid */}
+                    
                     <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
                         {photos.map((photo) => {
                             const isSelected = selectedPhotos.some((p) => p._id === photo._id);
@@ -558,8 +554,7 @@ export function EventManagementPage() {
                     <Pagination totalItems={totalPhotos} currentPage={photoPage} pageSize={PAGE_SIZE} onPageChange={setPhotoPage} />
                 </section>
             )}
-
-            {/* ═══ GUESTS TAB ═══ */}
+ 
             {activeTab === "guests" && (
                 <section className="card" style={{ marginTop: 16, padding: "1.5rem" }}>
                     <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#fff" }}>Guest Activity</h2>
@@ -611,7 +606,6 @@ export function EventManagementPage() {
                         </div>
                     )}
 
-                    {/* Expanded Guest Collection */}
                     {expandedGuest && (
                         <div className="card" style={{ marginTop: 16, padding: "1.25rem", border: "1px solid var(--accent-glow)" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
@@ -674,8 +668,7 @@ export function EventManagementPage() {
                     )}
                 </section>
             )}
-
-            {/* ═══ ACCESS TAB ═══ */}
+ 
             {activeTab === "access" && (
                 <section className="card" style={{ marginTop: 16, padding: "1.5rem" }}>
                     <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#fff" }}>Access Level</h2>
@@ -713,13 +706,13 @@ export function EventManagementPage() {
                             border: "1px solid var(--border)", background: "var(--bg)",
                             fontSize: "0.8125rem", wordBreak: "break-all", color: "var(--accent-hover)",
                         }}>
-                            {guestLink}
+                            {event.sharableLink}
                         </div>
                         <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
                             <button onClick={copyLink} className="btn-secondary" style={{ padding: "0.4rem 0.875rem" }}>
                                 {copiedLink ? "✓ Copied" : "Copy Link"}
                             </button>
-                            <a href={guestLink} target="_blank" rel="noreferrer" className="btn-primary" style={{ padding: "0.4rem 0.875rem", textDecoration: "none" }}>
+                            <a href={event.sharableLink} target="_blank" rel="noreferrer" className="btn-primary" style={{ padding: "0.4rem 0.875rem", textDecoration: "none" }}>
                                 Open
                             </a>
                         </div>
@@ -727,7 +720,6 @@ export function EventManagementPage() {
                 </section>
             )}
 
-            {/* ═══ SETTINGS TAB ═══ */}
             {activeTab === "settings" && (
                 <section className="card" style={{ marginTop: 16, padding: "1.5rem" }}>
                     <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#fff" }}>Event Settings</h2>
@@ -760,7 +752,6 @@ export function EventManagementPage() {
                 </section>
             )}
 
-            {/* ═══ ADD PHOTO MODAL ═══ */}
             {addPhotoModal && (
                 <div className="modal-backdrop">
                     <div className="card" style={{ width: "100%", maxWidth: 640, padding: "1.5rem", maxHeight: "80vh", overflow: "auto" }}>

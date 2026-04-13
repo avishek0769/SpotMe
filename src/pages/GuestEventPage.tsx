@@ -240,7 +240,6 @@ export function GuestEventPage() {
     return (
         <>
             <div className="page-wrap">
-            {/* Header */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
                 <div>
                     <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>{event.name}</h1>
@@ -253,7 +252,6 @@ export function GuestEventPage() {
                 </Link>
             </div>
 
-            {/* Auth banner for non-logged-in users */}
             {!user && (
                 <div className="alert alert-info" style={{ marginTop: 12 }}>
                     <Link to="/login" style={{ color: "var(--accent-hover)", fontWeight: 600 }}>Sign in</Link> to upload selfies and find your photos.
@@ -261,7 +259,6 @@ export function GuestEventPage() {
                 </div>
             )}
 
-            {/* Logged-in: back to dashboard */}
             {user && (
                 <div style={{ marginTop: 12 }}>
                     <Link to="/dashboard" style={{ fontSize: "0.8125rem", color: "var(--accent-hover)", textDecoration: "none" }}>
@@ -270,7 +267,6 @@ export function GuestEventPage() {
                 </div>
             )}
 
-            {/* ═══ Browse All Photos (access = browse) ═══ */}
             {event.accessLevel === "browse" && (
                 <section className="card" style={{ marginTop: 20, padding: "1.25rem" }}>
                     <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "#fff" }}>All Event Photos</h2>
@@ -294,7 +290,6 @@ export function GuestEventPage() {
                 </section>
             )}
 
-            {/* ═══ Find My Photos (requires auth) ═══ */}
             {user ? (
                 <section className="card" style={{ marginTop: 20, padding: "1.25rem" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
@@ -306,7 +301,6 @@ export function GuestEventPage() {
                         )}
                     </div>
 
-                    {/* Step indicator */}
                     <div style={{
                         marginTop: 12, padding: "0.5rem 0.875rem", borderRadius: 8,
                         background: "var(--bg-soft)", border: "1px solid var(--border)",
@@ -318,7 +312,6 @@ export function GuestEventPage() {
                     {error && <div className="alert alert-error" style={{ marginTop: 10 }}>{error}</div>}
                     {message && matchStep !== "select" && <div className="alert alert-success" style={{ marginTop: 10 }}>{message}</div>}
 
-                    {/* ─ Step 1: Select selfies ─ */}
                     {(matchStep === "select") && (
                         <div style={{ marginTop: 16 }}>
                             <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginBottom: 10 }}>
@@ -326,7 +319,6 @@ export function GuestEventPage() {
                             </p>
                             <input ref={selfieRef} type="file" multiple accept="image/*" onChange={onSelfieChange} className="ui-input" style={{ maxWidth: 400 }} />
 
-                            {/* Previews */}
                             {selfiePreviews.length > 0 && (
                                 <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
                                     {selfiePreviews.map((preview, i) => (
@@ -357,7 +349,6 @@ export function GuestEventPage() {
                         </div>
                     )}
 
-                    {/* ─ Step (uploading spinner) ─ */}
                     {matchStep === "uploading" && (
                         <div style={{ marginTop: 20, textAlign: "center", padding: "2rem" }}>
                             <div className="spinner" style={{ margin: "0 auto", width: 32, height: 32 }} />
@@ -367,7 +358,6 @@ export function GuestEventPage() {
                         </div>
                     )}
 
-                    {/* ─ Step 2: Uploaded — Find matches button ─ */}
                     {matchStep === "uploaded" && (
                         <div style={{ marginTop: 16 }}>
                             <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
@@ -379,7 +369,6 @@ export function GuestEventPage() {
                         </div>
                     )}
 
-                    {/* ─ Matching spinner ─ */}
                     {matchStep === "matching" && (
                         <div style={{ marginTop: 20, textAlign: "center", padding: "2rem" }}>
                             <div className="spinner" style={{ margin: "0 auto", width: 32, height: 32 }} />
@@ -389,10 +378,8 @@ export function GuestEventPage() {
                         </div>
                     )}
 
-                    {/* ─ Step 3: Results ─ */}
                     {matchStep === "results" && (
                         <div style={{ marginTop: 16 }}>
-                            {/* Action Buttons */}
                             {matchedPhotos.length > 0 && (
                                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
                                     <button onClick={handleDownloadAll} className="btn-primary" style={{ padding: "0.4rem 0.875rem" }}>
@@ -404,7 +391,6 @@ export function GuestEventPage() {
                                 </div>
                             )}
 
-                            {/* Photo Grid */}
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8 }}>
                                 {pagedMyPhotos.map((p) => {
                                     const sel = selectedIds.includes(p._id);

@@ -32,7 +32,7 @@ async function requestRaw(url: string, opts: RequestInit = {}): Promise<Response
 
 interface ApiRes<T> { statusCode: number; data: T; message: string; }
 
-// ─── AUTH ───
+// AUTH
 export async function sendVerificationCode(email: string) {
     return request<ApiRes<{ emailSent: boolean }>>("/user/send-verification-code", { method: "POST", body: JSON.stringify({ email }) });
 }
@@ -67,7 +67,7 @@ export async function resetPassword(email: string, code: string, password: strin
     return request<ApiRes<{ reset: boolean }>>("/user/reset-password", { method: "PATCH", body: JSON.stringify({ email, code, password }) });
 }
 
-// ─── EVENTS ───
+// EVENTS
 export async function createEvent(data: { name: string; eventDate: string; accessLevel?: string }) {
     return request<ApiRes<EventData>>("/event/create", { method: "POST", body: JSON.stringify(data) });
 }
@@ -89,7 +89,7 @@ export async function completeEventUpload(eventId: string) {
     return request<ApiRes<EventData>>(`/event/complete/${eventId}`, { method: "PATCH" });
 }
 
-// ─── PHOTOS ───
+// PHOTOS
 export async function getSignedUrlForEvent(eventId: string) {
     return request<ApiRes<{ url: string; fields: Record<string, string> }>>(`/photo/signed-url/event/${eventId}`, { method: "GET" });
 }
@@ -119,7 +119,7 @@ export async function deleteSelfies(collectionId: string, fileNames: string[], p
     return request<ApiRes<{ deletedCount: number }>>(`/photo/delete/selfie/${collectionId}`, { method: "DELETE", body: JSON.stringify({ fileNames, photoIds }) });
 }
 
-// ─── COLLECTIONS ───
+// COLLECTIONS
 export async function findMatch(eventId: string, selfiePhotoIds: string[], collectionId: string) {
     return request<ApiRes<PhotoData[]>>(`/collection/find/${eventId}`, { method: "POST", body: JSON.stringify({ selfiePhotoIds, collectionId }) });
 }
@@ -142,7 +142,7 @@ export async function getGuestCollectionByEvent(eventId: string, userId: string)
     return request<ApiRes<CollectionData | null>>(`/collection/event/${eventId}/user/${userId}`, { method: "GET" });
 }
 
-// ─── S3 Upload helpers ───
+// S3 Upload helpers
 export async function uploadFileToS3(url: string, fields: Record<string, string>, file: File): Promise<string> {
     const formData = new FormData();
     const key = fields["key"].replace("${filename}", file.name);
@@ -175,7 +175,7 @@ export async function uploadSelfieToS3(signedUrl: string, file: File): Promise<s
     return signedUrl.split("?")[0];
 }
 
-// ─── Types ───
+// Types
 export interface UserData { _id: string; fullname?: string; username?: string; email: string; isVerified?: boolean; }
 export interface EventData {
     _id: string;

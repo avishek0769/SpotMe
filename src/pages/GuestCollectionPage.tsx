@@ -131,7 +131,7 @@ export function GuestCollectionPage() {
     if (!user) return <Navigate to={`/event/${id}`} replace />;
     if (notFound || !event) return <Navigate to="/dashboard" replace />;
 
-    // ─── Selfie file selection ───
+    //  Selfie file selection 
     function onSelfieChange(e: ChangeEvent<HTMLInputElement>) {
         const files = e.target.files;
         if (!files) return;
@@ -153,7 +153,7 @@ export function GuestCollectionPage() {
         setSelfiePreviews(newPreviews);
     }
 
-    // ─── Step 2: Upload ───
+    //  Step 2: Upload 
     async function handleUpload() {
         if (!id || selfieFiles.length === 0) { setError("Select at least 1 selfie"); return; }
         setMatchStep("uploading");
@@ -181,7 +181,7 @@ export function GuestCollectionPage() {
         }
     }
 
-    // ─── Step 3: Find matches ───
+    //  Step 3: Find matches 
     async function handleFindMatches() {
         const selfieIdsToMatch = uploadedSelfieIds.length > 0
             ? uploadedSelfieIds
@@ -228,7 +228,7 @@ export function GuestCollectionPage() {
         if (selfieRef.current) selfieRef.current.value = "";
     }
 
-    // ─── Collection management ───
+    //  Collection management 
     function togglePhotoSelection(photoId: string) {
         setSelectedPhotoIds((prev) => prev.includes(photoId) ? prev.filter((x) => x !== photoId) : [...prev, photoId]);
     }
@@ -296,7 +296,6 @@ export function GuestCollectionPage() {
     return (
         <>
             <div className="page-wrap">
-            {/* Header */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
                 <div>
                     <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>My Collection</h1>
@@ -310,11 +309,9 @@ export function GuestCollectionPage() {
                 </Link>
             </div>
 
-            {/* Alerts */}
             {error && <div className="alert alert-error" style={{ marginTop: 12 }}>{error}<button onClick={() => setError("")} style={{ float: "right", background: "none", border: "none", color: "inherit", cursor: "pointer" }}>✕</button></div>}
             {message && <div className="alert alert-success" style={{ marginTop: 12 }}>{message}</div>}
 
-            {/* Tab Bar */}
             <div style={{ marginTop: 16 }}>
                 <div className="tab-bar">
                     <button className={`tab-btn ${activeTab === "collection" ? "active" : ""}`} onClick={() => setActiveTab("collection")}>
@@ -329,7 +326,6 @@ export function GuestCollectionPage() {
                 </div>
             </div>
 
-            {/* ═══ COLLECTION TAB ═══ */}
             {activeTab === "collection" && (
                 <>
                     <section className="card" style={{ marginTop: 16, padding: "1.25rem" }}>
@@ -388,7 +384,6 @@ export function GuestCollectionPage() {
                         <Pagination totalItems={myPhotoTotal} currentPage={myPhotoPage} pageSize={PAGE_SIZE} onPageChange={setMyPhotoPage} />
                     </section>
 
-                    {/* Selfies */}
                     {selfies.length > 0 && (
                         <section className="card" style={{ marginTop: 16, padding: "1.25rem" }}>
                             <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "#fff" }}>My Selfies</h2>
@@ -413,7 +408,6 @@ export function GuestCollectionPage() {
                 </>
             )}
 
-            {/* ═══ FIND PHOTOS TAB ═══ */}
             {activeTab === "find" && (
                 <section className="card" style={{ marginTop: 16, padding: "1.25rem" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
@@ -448,7 +442,6 @@ export function GuestCollectionPage() {
                         </div>
                     </div>
 
-                    {/* Step indicator */}
                     <div style={{
                         marginTop: 12, padding: "0.5rem 0.875rem", borderRadius: 8,
                         background: "var(--bg-soft)", border: "1px solid var(--border)",
@@ -457,7 +450,6 @@ export function GuestCollectionPage() {
                         {stepLabels[matchStep]}
                     </div>
 
-                    {/* Step 1: Select */}
                     {matchStep === "select" && (
                         <div style={{ marginTop: 16 }}>
                             <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginBottom: 10 }}>
@@ -493,7 +485,6 @@ export function GuestCollectionPage() {
                         </div>
                     )}
 
-                    {/* Uploading */}
                     {matchStep === "uploading" && (
                         <div style={{ marginTop: 20, textAlign: "center", padding: "2rem" }}>
                             <div className="spinner" style={{ margin: "0 auto", width: 32, height: 32 }} />
@@ -501,7 +492,6 @@ export function GuestCollectionPage() {
                         </div>
                     )}
 
-                    {/* Step 2: Uploaded */}
                     {matchStep === "uploaded" && (
                         <div style={{ marginTop: 16 }}>
                             <div className="alert alert-success" style={{ marginBottom: 12 }}>{message}</div>
@@ -514,7 +504,6 @@ export function GuestCollectionPage() {
                         </div>
                     )}
 
-                    {/* Matching */}
                     {matchStep === "matching" && (
                         <div style={{ marginTop: 20, textAlign: "center", padding: "2rem" }}>
                             <div className="spinner" style={{ margin: "0 auto", width: 32, height: 32 }} />
@@ -522,7 +511,6 @@ export function GuestCollectionPage() {
                         </div>
                     )}
 
-                    {/* Done */}
                     {matchStep === "done" && (
                         <div style={{ marginTop: 16 }}>
                             <div className="alert alert-success" style={{ marginBottom: 12 }}>{message}</div>
@@ -558,7 +546,6 @@ export function GuestCollectionPage() {
                 </section>
             )}
 
-            {/* ═══ ALL PHOTOS TAB ═══ */}
             {activeTab === "all" && (
                 event.accessLevel === "browse" ? (
                     <section className="card" style={{ marginTop: 16, padding: "1.25rem" }}>
