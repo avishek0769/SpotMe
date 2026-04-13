@@ -123,7 +123,6 @@ export function DashboardPage() {
 
     return (
         <div className="page-wrap">
-            {/* Header */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
                 <div>
                     <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>Dashboard</h1>
@@ -220,7 +219,6 @@ export function DashboardPage() {
                 )}
             </section>
 
-            {/*  Create Event Modal  */}
             {showModal && (
                 <div className="modal-backdrop">
                     <div className="card" style={{ width: "100%", maxWidth: 440, padding: "1.75rem" }}>

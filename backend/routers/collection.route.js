@@ -1,7 +1,8 @@
 import { Router } from "express";
-import { verifyStrictJWT, verifyJWT } from "../middlewares/auth.middleware.js";
+import { verifyStrictJWT } from "../middlewares/auth.middleware.js";
 import {
-    findMatch,
+    findMatchPersist,
+    findMatchWithoutPersist,
     removePhoto,
     addPhoto,
     getAllPhotos,
@@ -12,7 +13,8 @@ import {
 
 const collectionRouter = Router();
 
-collectionRouter.route("/find/:eventId").post(verifyJWT, findMatch);
+collectionRouter.route("/find-persist/:eventId").post(verifyStrictJWT, findMatchPersist);
+collectionRouter.route("/find-without-persist/:eventId").post(findMatchWithoutPersist);
 collectionRouter
     .route("/photo/remove/:collectionId")
     .delete(verifyStrictJWT, removePhoto);

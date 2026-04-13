@@ -99,6 +99,14 @@ export async function getSignedUrlForSelfie(eventId: string, fileCount: number) 
 export async function createSelfie(eventId: string, urls: string[]) {
     return request<ApiRes<{ photos: PhotoData[]; collection: CollectionData }>>(`/photo/create/selfie/${eventId}`, { method: "POST", body: JSON.stringify({ urls }) });
 }
+export async function uploadTempSelfies(files: File[]) {
+    const form = new FormData();
+    files.forEach((file) => form.append("selfies", file));
+    return request<ApiRes<{ selfieImageIds: string[] }>>("/photo/upload/selfie-temp", {
+        method: "POST",
+        body: form,
+    });
+}
 export async function downloadAllEvent(eventId: string) {
     return requestRaw(`/photo/download/all/event/${eventId}`, { method: "GET" });
 }
@@ -121,7 +129,13 @@ export async function deleteSelfies(collectionId: string, fileNames: string[], p
 
 // COLLECTIONS
 export async function findMatch(eventId: string, selfiePhotoIds: string[], collectionId: string) {
-    return request<ApiRes<PhotoData[]>>(`/collection/find/${eventId}`, { method: "POST", body: JSON.stringify({ selfiePhotoIds, collectionId }) });
+    return request<ApiRes<PhotoData[]>>(`/collection/find-persist/${eventId}`, { method: "POST", body: JSON.stringify({ selfiePhotoIds, collectionId }) });
+}
+export async function findMatchWithoutPersist(eventId: string, selfieImageIds: string[]) {
+    return request<ApiRes<PhotoData[]>>(`/collection/find-without-persist/${eventId}`, {
+        method: "POST",
+        body: JSON.stringify({ selfieImageIds }),
+    });
 }
 export async function removePhotoFromCollection(collectionId: string, photoIds: string[]) {
     return request<ApiRes<null>>(`/collection/photo/remove/${collectionId}`, { method: "DELETE", body: JSON.stringify({ photoIds }) });

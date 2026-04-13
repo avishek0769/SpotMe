@@ -141,31 +141,36 @@ export function GuestEventPage() {
         setMatchStep("uploading");
         setError("");
         try {
-            // Get signed URLs
-            const signedRes = await api.getSignedUrlForSelfie(id, selfieFiles.length);
-            const signedUrls = signedRes.data.urls;
+            if (user) {
+                const signedRes = await api.getSignedUrlForSelfie(id, selfieFiles.length);
+                const signedUrls = signedRes.data.urls;
 
-            // Upload to S3
-            const results = await Promise.allSettled(
-                selfieFiles.map((file, i) => api.uploadSelfieToS3(signedUrls[i], file))
-            );
-            const urls = results
-                .filter((r): r is PromiseFulfilledResult<string> => r.status === "fulfilled")
-                .map((r) => r.value);
+                const results = await Promise.allSettled(
+                    selfieFiles.map((file, i) => api.uploadSelfieToS3(signedUrls[i], file))
+                );
+                const urls = results
+                    .filter((r): r is PromiseFulfilledResult<string> => r.status === "fulfilled")
+                    .map((r) => r.value);
 
-            if (urls.length === 0) {
-                setError("Failed to upload selfies. Please try again.");
-                setMatchStep("select");
-                return;
+                if (urls.length === 0) {
+                    setError("Failed to upload selfies. Please try again.");
+                    setMatchStep("select");
+                    return;
+                }
+
+                const selfieRes = await api.createSelfie(id, urls);
+                setUploadedUrls(urls);
+                setSelfiePhotoIds(selfieRes.data.photos.map((p) => p._id));
+                setCollectionId(selfieRes.data.collection._id);
+            } else {
+                const tempUploadRes = await api.uploadTempSelfies(selfieFiles);
+                setUploadedUrls(tempUploadRes.data.selfieImageIds);
+                setSelfiePhotoIds(tempUploadRes.data.selfieImageIds);
+                setCollectionId(null);
             }
 
-            // Create selfie records in DB
-            const selfieRes = await api.createSelfie(id, urls);
-            setUploadedUrls(urls);
-            setSelfiePhotoIds(selfieRes.data.photos.map((p) => p._id));
-            setCollectionId(selfieRes.data.collection._id);
             setMatchStep("uploaded");
-            setMessage(`${urls.length} selfie(s) uploaded successfully!`);
+            setMessage(`${selfieFiles.length} selfie(s) uploaded successfully!`);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Upload failed");
             setMatchStep("select");
@@ -174,11 +179,13 @@ export function GuestEventPage() {
 
     // Step 3: Find matches
     async function handleFindMatches() {
-        if (!id || !selfiePhotoIds.length || !collectionId) return;
+        if (!id || !selfiePhotoIds.length) return;
         setMatchStep("matching");
         setError("");
         try {
-            const matchRes = await api.findMatch(id, selfiePhotoIds, collectionId);
+            const matchRes = user
+                ? await api.findMatch(id, selfiePhotoIds, collectionId || "")
+                : await api.findMatchWithoutPersist(id, selfiePhotoIds);
             setMatchedPhotos(matchRes.data);
             setMatchStep("results");
             setMessage(`Found ${matchRes.data.length} matching photo(s)!`);
@@ -208,7 +215,7 @@ export function GuestEventPage() {
     }
 
     async function handleDownloadAll() {
-        if (!id || !collectionId) return;
+        if (!id || !collectionId || !user) return;
         try {
             setDownloadToast("Download started");
             window.setTimeout(() => setDownloadToast(""), 1800);
@@ -218,7 +225,7 @@ export function GuestEventPage() {
     }
 
     async function handleDownloadSelected() {
-        if (!id || !selectedIds.length) return;
+        if (!id || !selectedIds.length || !user) return;
         try {
             setDownloadToast("Download started");
             window.setTimeout(() => setDownloadToast(""), 1800);
@@ -254,8 +261,8 @@ export function GuestEventPage() {
 
             {!user && (
                 <div className="alert alert-info" style={{ marginTop: 12 }}>
-                    <Link to="/login" style={{ color: "var(--accent-hover)", fontWeight: 600 }}>Sign in</Link> to upload selfies and find your photos.
-                    Logged-in users can also save their collection for later.
+                    Shared link mode: you can upload selfies and find matches without signing in.
+                    <Link to="/login" style={{ color: "var(--accent-hover)", fontWeight: 600, marginLeft: 4 }}>Sign in</Link> only if you want saved collections and downloads.
                 </div>
             )}
 
@@ -290,8 +297,7 @@ export function GuestEventPage() {
                 </section>
             )}
 
-            {user ? (
-                <section className="card" style={{ marginTop: 20, padding: "1.25rem" }}>
+            <section className="card" style={{ marginTop: 20, padding: "1.25rem" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
                         <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "#fff" }}>Find My Photos</h2>
                         {matchStep !== "select" && matchStep !== "uploading" && matchStep !== "matching" && (
@@ -353,7 +359,7 @@ export function GuestEventPage() {
                         <div style={{ marginTop: 20, textAlign: "center", padding: "2rem" }}>
                             <div className="spinner" style={{ margin: "0 auto", width: 32, height: 32 }} />
                             <p style={{ marginTop: 12, fontSize: "0.875rem", color: "var(--text-secondary)" }}>
-                                Uploading selfies to S3...
+                                Uploading selfies...
                             </p>
                         </div>
                     )}
@@ -380,7 +386,7 @@ export function GuestEventPage() {
 
                     {matchStep === "results" && (
                         <div style={{ marginTop: 16 }}>
-                            {matchedPhotos.length > 0 && (
+                            {matchedPhotos.length > 0 && user && (
                                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
                                     <button onClick={handleDownloadAll} className="btn-primary" style={{ padding: "0.4rem 0.875rem" }}>
                                         Download All ({matchedPhotos.length})
@@ -416,31 +422,16 @@ export function GuestEventPage() {
                             )}
 
                             <Pagination totalItems={matchedPhotos.length} currentPage={myPhotosPage} pageSize={PAGE_SIZE} onPageChange={setMyPhotosPage} />
+
+                            {!user && matchedPhotos.length > 0 && (
+                                <div className="alert alert-info" style={{ marginTop: 10 }}>
+                                    <Link to="/login" style={{ color: "var(--accent-hover)", fontWeight: 600 }}>Sign in</Link> to save these matches and download photos.
+                                </div>
+                            )}
                         </div>
                     )}
                 </section>
-            ) : (
-                /* Non-logged-in: show prompt to log in for selfie features */
-                <section className="card" style={{ marginTop: 20, padding: "1.25rem" }}>
-                    <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "#fff" }}>Find My Photos</h2>
-                    <div style={{ marginTop: 12, textAlign: "center", padding: "2rem" }}>
-                        <div style={{ fontSize: 44 }}>🤳</div>
-                        <h3 style={{ marginTop: 10, fontSize: "1rem", fontWeight: 600, color: "#fff" }}>Sign in to find your photos</h3>
-                        <p style={{ marginTop: 6, fontSize: "0.8125rem", color: "var(--text-secondary)", maxWidth: 360, margin: "6px auto 0" }}>
-                            Upload a selfie and our AI will match your face across all event photos.
-                            You need an account to use this feature.
-                        </p>
-                        <div style={{ marginTop: 16, display: "flex", gap: 8, justifyContent: "center" }}>
-                            <Link to="/login" className="btn-primary" style={{ padding: "0.5rem 1.25rem", textDecoration: "none" }}>
-                                Sign In
-                            </Link>
-                            <Link to="/signup" className="btn-secondary" style={{ padding: "0.5rem 1.25rem", textDecoration: "none" }}>
-                                Sign Up
-                            </Link>
-                        </div>
-                    </div>
-                </section>
-            )}
+
             </div>
 
             {downloadToast && (

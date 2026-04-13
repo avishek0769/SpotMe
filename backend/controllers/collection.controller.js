@@ -10,8 +10,9 @@ import Collection from "../models/collection.model.js";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs/promises";
 import mongoose from "mongoose";
+import path from "path";
 
-const findMatch = asyncHandler(async (req, res) => {
+const findMatchPersist = asyncHandler(async (req, res) => {
     const { eventId } = req.params;
     const { selfiePhotoIds, collectionId } = req.body;
 
@@ -33,17 +34,15 @@ const findMatch = asyncHandler(async (req, res) => {
     }
 
     // Track guest access
-    if (req.user) {
-        const existingGuest = await Guest.findOne({
-            eventId,
-            userId: req.user._id,
-        });
-        if (existingGuest) {
-            existingGuest.accessedAt = Date.now();
-            await existingGuest.save();
-        } else {
-            await Guest.create({ eventId, userId: req.user._id });
-        }
+    const existingGuest = await Guest.findOne({
+        eventId,
+        userId: req.user._id,
+    });
+    if (existingGuest) {
+        existingGuest.accessedAt = Date.now();
+        await existingGuest.save();
+    } else {
+        await Guest.create({ eventId, userId: req.user._id });
     }
 
     const dirPath = `images/${uuidv4()}`;
@@ -114,15 +113,108 @@ const findMatch = asyncHandler(async (req, res) => {
     }).select("-type -eventId -createdAt -updatedAt");
 
     // Update user's collection with matched photos
-    if (req.user) {
-        await Collection.findByIdAndUpdate(collectionId, {
-            $addToSet: {
-                myPhotos: {
-                    $each: filteredResultPhotoIds,
-                },
+    await Collection.findByIdAndUpdate(collectionId, {
+        $addToSet: {
+            myPhotos: {
+                $each: filteredResultPhotoIds,
             },
-        });
+        },
+    });
+
+    return res.json(new ApiResponse(200, photosMatched, "Match found"));
+});
+
+const findMatchWithoutPersist = asyncHandler(async (req, res) => {
+    const { eventId } = req.params;
+    const { selfieImageIds } = req.body;
+
+    if (
+        !selfieImageIds ||
+        !Array.isArray(selfieImageIds) ||
+        selfieImageIds.length === 0
+    ) {
+        throw new ApiError(400, "selfieImageIds must be a non-empty array");
     }
+
+    if (selfieImageIds.length > 3) {
+        throw new ApiError(400, "You can upload a maximum of 3 selfies");
+    }
+
+    const selfieDir = path.join("images", "temp_selfies");
+    const selfiePaths = selfieImageIds.map((id) => {
+        const fileName = String(id || "").trim();
+        if (!fileName || fileName !== path.basename(fileName)) {
+            throw new ApiError(400, "Invalid selfie image id");
+        }
+        return path.join(selfieDir, fileName);
+    });
+
+    await Promise.all(
+        selfiePaths.map(async (imagePath) => {
+            try {
+                await fs.access(imagePath);
+            } catch {
+                throw new ApiError(404, `Selfie image not found: ${path.basename(imagePath)}`);
+            }
+        }),
+    );
+
+    let allFaces = [];
+    try {
+        const results = await Promise.allSettled(
+            selfiePaths.map(async (imagePath) => {
+                const faces = await indexFacesInImage(imagePath, path.basename(imagePath));
+                return faces;
+            }),
+        );
+
+        allFaces = results
+            .filter((r) => r.status === "fulfilled" && r.value?.length > 0)
+            .flatMap((r) => r.value);
+    } finally {
+        await Promise.allSettled(selfiePaths.map((imagePath) => fs.unlink(imagePath)));
+    }
+
+    if (allFaces.length === 0) {
+        throw new ApiError(
+            404,
+            "No faces detected in the provided photos. Please try with clearer photos.",
+        );
+    }
+
+    const searches = await Promise.all(
+        allFaces.map((face) =>
+            qdrant.search(`Event_${eventId}`, {
+                vector: Array.from(face.embeddings),
+                withPayload: true,
+                score_threshold: 0.45,
+            }),
+        ),
+    );
+
+    const photoCount = new Map();
+    searches.flat().forEach((result) => {
+        const photoId = result.payload.photoId;
+        if (!photoCount.has(photoId)) {
+            photoCount.set(photoId, { count: 0, score: 0, result });
+        }
+        const data = photoCount.get(photoId);
+        data.count += 1;
+        data.score = Math.max(result.score, data.score);
+    });
+
+    const filteredResults = [...photoCount.values()]
+        .filter((r) => r.count >= 2)
+        .sort((a, b) => b.score - a.score)
+        .map((r) => r.result);
+
+    const filteredResultPhotoIds = filteredResults.map(
+        (r) => r.payload.photoId,
+    );
+
+    const photosMatched = await Photo.find({
+        _id: { $in: filteredResultPhotoIds },
+    }).select("-type -eventId -createdAt -updatedAt");
 
     return res.json(new ApiResponse(200, photosMatched, "Match found"));
 });
@@ -265,7 +357,8 @@ const getGuestCollectionByEvent = asyncHandler(async (req, res) => {
 });
 
 export {
-    findMatch,
+    findMatchPersist,
+    findMatchWithoutPersist,
     removePhoto,
     addPhoto,
     getAllPhotos,

@@ -18,7 +18,7 @@ const eventRouter = Router();
 eventRouter.route("/create").post(verifyStrictJWT, createEvent);
 eventRouter.route("/created/list").get(verifyStrictJWT, getAllCreatedEvents);
 eventRouter.route("/shared/list").get(verifyStrictJWT, getAllSharedEvents);
-eventRouter.route("/details/:eventId").get(verifyStrictJWT, getDetails);
+eventRouter.route("/details/:eventId").get(getDetails);
 eventRouter.route("/all-photos/:eventId").get(verifyStrictJWT, getAllPhotos);
 eventRouter.route("/all-guests/:eventId").get(verifyStrictJWT, getAllGuests);
 eventRouter.route("/edit/:eventId").patch(verifyStrictJWT, editEvent);

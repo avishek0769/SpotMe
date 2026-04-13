@@ -155,6 +155,28 @@ const createSelfie = asyncHandler(async (req, res) => {
         );
 });
 
+const uploadSelfiesWithoutPersist = asyncHandler(async (req, res) => {
+    const files = req.files;
+
+    if (!Array.isArray(files) || files.length === 0) {
+        throw new ApiError(400, "Please upload at least one selfie");
+    }
+
+    if (files.length > 3) {
+        throw new ApiError(400, "You can upload a maximum of 3 selfies");
+    }
+
+    return res.status(201).json(
+        new ApiResponse(
+            201,
+            {
+                selfieImageIds: files.map((file) => file.filename),
+            },
+            "Selfies uploaded successfully",
+        ),
+    );
+});
+
 const downloadSelected = asyncHandler(async (req, res) => {
     const { fileNames } = req.body;
     const { eventId } = req.params;
@@ -331,4 +353,5 @@ export {
     deletePhoto,
     deleteSelfie,
     createSelfie,
+    uploadSelfiesWithoutPersist,
 };

@@ -37,11 +37,7 @@ function App() {
                     <Route path="/event/:id" element={<GuestEventPage />} />
                     <Route
                         path="/events/:id/guest/collection"
-                        element={
-                            <ProtectedRoute>
-                                <GuestCollectionPage />
-                            </ProtectedRoute>
-                        }
+                        element={<GuestCollectionPage />}
                     />
                     <Route path="/home" element={<Navigate to="/" replace />} />
                     <Route path="*" element={<NotFoundPage />} />
