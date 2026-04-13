@@ -11,6 +11,7 @@ import {
     uploadSelfiesWithoutPersist,
     downloadAll,
     downloadSelected,
+    downloadAllFoundWithoutPersist,
     deletePhoto,
     deleteSelfie,
 } from "../controllers/photo.controller.js";
@@ -49,6 +50,9 @@ photoRouter
 photoRouter
     .route("/download/selected/:eventId")
     .post(verifyStrictJWT, downloadSelected);
+photoRouter
+    .route("/download/all/found/:eventId")
+    .post(downloadAllFoundWithoutPersist);
 photoRouter
     .route("/download/all/event/:eventId")
     .get(verifyStrictJWT, downloadAll);

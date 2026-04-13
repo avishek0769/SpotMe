@@ -113,6 +113,13 @@ export async function downloadAllEvent(eventId: string) {
 export async function downloadAllCollection(collectionId: string, eventId: string) {
     return requestRaw(`/photo/download/all/collection/${collectionId}/${eventId}`, { method: "GET" });
 }
+export async function downloadAllFound(eventId: string, fileNames: string[]) {
+    return requestRaw(`/photo/download/all/found/${eventId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileNames }),
+    });
+}
 export async function downloadSelected(eventId: string, fileNames: string[]) {
     return requestRaw(`/photo/download/selected/${eventId}`, {
         method: "POST",

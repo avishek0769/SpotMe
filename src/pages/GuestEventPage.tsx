@@ -215,11 +215,16 @@ export function GuestEventPage() {
     }
 
     async function handleDownloadAll() {
-        if (!id || !collectionId || !user) return;
+        if (!id) return;
         try {
             setDownloadToast("Download started");
             window.setTimeout(() => setDownloadToast(""), 1800);
-            const res = await api.downloadAllCollection(collectionId, id);
+            const res = user && collectionId
+                ? await api.downloadAllCollection(collectionId, id)
+                : await api.downloadAllFound(
+                    id,
+                    matchedPhotos.map((p) => p.url.split("/").pop() || "").filter(Boolean),
+                );
             await api.triggerDownload(res, "my_photos.zip");
         } catch { setError("Download failed"); }
     }
@@ -386,12 +391,12 @@ export function GuestEventPage() {
 
                     {matchStep === "results" && (
                         <div style={{ marginTop: 16 }}>
-                            {matchedPhotos.length > 0 && user && (
+                            {matchedPhotos.length > 0 && (
                                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
                                     <button onClick={handleDownloadAll} className="btn-primary" style={{ padding: "0.4rem 0.875rem" }}>
                                         Download All ({matchedPhotos.length})
                                     </button>
-                                    <button onClick={handleDownloadSelected} disabled={!selectedIds.length} className="btn-secondary" style={{ padding: "0.4rem 0.875rem" }}>
+                                    <button onClick={handleDownloadSelected} disabled={!selectedIds.length || !user} className="btn-secondary" style={{ padding: "0.4rem 0.875rem" }}>
                                         Download Selected ({selectedIds.length})
                                     </button>
                                 </div>

@@ -197,6 +197,31 @@ const downloadSelected = asyncHandler(async (req, res) => {
     archive.finalize();
 });
 
+const downloadAllFoundWithoutPersist = asyncHandler(async (req, res) => {
+    const { fileNames } = req.body;
+    const { eventId } = req.params;
+
+    if (!Array.isArray(fileNames) || fileNames.length === 0) {
+        throw new ApiError(400, "fileNames must be a non-empty array");
+    }
+
+    const archive = archiver("zip", { zlib: { level: 5 } });
+
+    res.attachment("matched_images.zip");
+    archive.pipe(res);
+
+    for (const fileName of fileNames) {
+        const command = new GetObjectCommand({
+            Bucket: process.env.AWS_S3_BUCKET_NAME,
+            Key: `event_images/${eventId}/${fileName}`,
+        });
+        const { Body } = await s3.send(command);
+        archive.append(Body, { name: fileName });
+    }
+
+    archive.finalize();
+});
+
 const downloadAll = asyncHandler(async (req, res) => {
     const { eventId, collectionId } = req.params;
 
@@ -354,4 +379,5 @@ export {
     deleteSelfie,
     createSelfie,
     uploadSelfiesWithoutPersist,
+    downloadAllFoundWithoutPersist,
 };
