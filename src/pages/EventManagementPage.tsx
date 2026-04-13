@@ -21,6 +21,20 @@ function getFileName(url: string) {
     return url.split("/").pop() || "";
 }
 
+async function countEventPhotosWithPagination(eventId: string) {
+    let total = 0;
+    let page = 0;
+
+    while (true) {
+        const res = await api.getEventPhotos(eventId, page, PAGE_SIZE);
+        total += res.data.length;
+        if (res.data.length < PAGE_SIZE) break;
+        page += 1;
+    }
+
+    return total;
+}
+
 export function EventManagementPage() {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
@@ -49,6 +63,8 @@ export function EventManagementPage() {
     const [expandedGuest, setExpandedGuest] = useState<GuestData | null>(null);
     const [guestCollectionPhotos, setGuestCollectionPhotos] = useState<PhotoData[]>([]);
     const [guestCollectionId, setGuestCollectionId] = useState<string | null>(null);
+    const [guestCollectionPage, setGuestCollectionPage] = useState(1);
+    const [guestCollectionTotal, setGuestCollectionTotal] = useState(0);
     const [selectedGuestPhotos, setSelectedGuestPhotos] = useState<string[]>([]);
     const [guestCollectionLoading, setGuestCollectionLoading] = useState(false);
     const [addPhotoModal, setAddPhotoModal] = useState(false);
@@ -89,10 +105,9 @@ export function EventManagementPage() {
         try {
             const res = await api.getEventPhotos(id, photoPage - 1, PAGE_SIZE);
             setPhotos(res.data);
-            // If first page and we got data, also get total count with a big limit
             if (photoPage === 1) {
-                const countRes = await api.getEventPhotos(id, 0, 999999);
-                setTotalPhotos(countRes.data.length);
+                const total = await countEventPhotosWithPagination(id);
+                setTotalPhotos(total);
             }
         } catch { /* ignore */ }
     }, [id, photoPage]);
@@ -204,6 +219,8 @@ export function EventManagementPage() {
             setExpandedGuest(null);
             setGuestCollectionPhotos([]);
             setGuestCollectionId(null);
+            setGuestCollectionPage(1);
+            setGuestCollectionTotal(0);
             setSelectedGuestPhotos([]);
             return;
         }
@@ -212,18 +229,22 @@ export function EventManagementPage() {
         setExpandedGuest(guest);
         setGuestCollectionLoading(true);
         setSelectedGuestPhotos([]);
+        setGuestCollectionPage(1);
         try {
             const collectionRes = await api.getGuestCollectionByEvent(id, guest.userId);
             const collection = collectionRes.data;
             if (!collection?._id) {
                 setGuestCollectionPhotos([]);
                 setGuestCollectionId(null);
+                setGuestCollectionTotal(0);
                 return;
             }
 
             setGuestCollectionId(collection._id);
+            const total = Array.isArray(collection.myPhotos) ? collection.myPhotos.length : 0;
+            setGuestCollectionTotal(total);
 
-            const photosRes = await api.getCollectionPhotos(collection._id, 0, 999999);
+            const photosRes = await api.getCollectionPhotos(collection._id, 0, PAGE_SIZE);
             const photos = photosRes.data.length > 0 && Array.isArray(photosRes.data[0].myPhotos)
                 ? photosRes.data[0].myPhotos as PhotoData[]
                 : [];
@@ -240,6 +261,7 @@ export function EventManagementPage() {
         try {
             await api.removePhotoFromCollection(guestCollectionId, selectedGuestPhotos);
             setGuestCollectionPhotos((prev) => prev.filter((p) => !selectedGuestPhotos.includes(p._id)));
+            setGuestCollectionTotal((prev) => Math.max(0, prev - selectedGuestPhotos.length));
             setSelectedGuestPhotos([]);
             setSuccess("Photos removed from collection");
             setTimeout(() => setSuccess(""), 3000);
@@ -258,9 +280,15 @@ export function EventManagementPage() {
             setTimeout(() => setSuccess(""), 3000);
             // Reload collection
             if (guestCollectionId) {
-                const res = await api.getCollectionPhotos(guestCollectionId, 0, 999);
+                const res = await api.getCollectionPhotos(guestCollectionId, guestCollectionPage - 1, PAGE_SIZE);
                 if (res.data.length > 0 && Array.isArray(res.data[0].myPhotos)) {
                     setGuestCollectionPhotos(res.data[0].myPhotos as PhotoData[]);
+                }
+                if (expandedGuest?.userId) {
+                    const collectionRes = await api.getGuestCollectionByEvent(id, expandedGuest.userId);
+                    if (collectionRes.data && Array.isArray(collectionRes.data.myPhotos)) {
+                        setGuestCollectionTotal(collectionRes.data.myPhotos.length);
+                    }
                 }
             }
         } catch (err) {
@@ -608,18 +636,39 @@ export function EventManagementPage() {
                                     No photos in this guest's collection. Use "Add Photos" to add from the event.
                                 </p>
                             ) : (
-                                <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8 }}>
-                                    {guestCollectionPhotos.map((p) => {
-                                        const isSel = selectedGuestPhotos.includes(p._id);
-                                        return (
-                                            <div key={p._id} className="photo-tile" style={{ padding: 4, border: isSel ? "2px solid var(--accent)" : undefined, cursor: "pointer" }}
-                                                onClick={() => setSelectedGuestPhotos((prev) => isSel ? prev.filter((x) => x !== p._id) : [...prev, p._id])}
-                                            >
-                                                <img src={p.url} alt="" style={{ borderRadius: 6, height: 100 }} />
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                                <>
+                                    <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8 }}>
+                                        {guestCollectionPhotos.map((p) => {
+                                            const isSel = selectedGuestPhotos.includes(p._id);
+                                            return (
+                                                <div key={p._id} className="photo-tile" style={{ padding: 4, border: isSel ? "2px solid var(--accent)" : undefined, cursor: "pointer" }}
+                                                    onClick={() => setSelectedGuestPhotos((prev) => isSel ? prev.filter((x) => x !== p._id) : [...prev, p._id])}
+                                                >
+                                                    <img src={p.url} alt="" style={{ borderRadius: 6, height: 100 }} />
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <Pagination
+                                        totalItems={guestCollectionTotal}
+                                        currentPage={guestCollectionPage}
+                                        pageSize={PAGE_SIZE}
+                                        onPageChange={async (page) => {
+                                            if (!guestCollectionId) return;
+                                            setGuestCollectionPage(page);
+                                            setGuestCollectionLoading(true);
+                                            try {
+                                                const res = await api.getCollectionPhotos(guestCollectionId, page - 1, PAGE_SIZE);
+                                                const photos = res.data.length > 0 && Array.isArray(res.data[0].myPhotos)
+                                                    ? res.data[0].myPhotos as PhotoData[]
+                                                    : [];
+                                                setGuestCollectionPhotos(photos);
+                                            } finally {
+                                                setGuestCollectionLoading(false);
+                                            }
+                                        }}
+                                    />
+                                </>
                             )}
                         </div>
                     )}

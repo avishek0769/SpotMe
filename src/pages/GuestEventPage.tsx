@@ -7,6 +7,20 @@ import type { EventData, PhotoData } from "../api";
 
 const PAGE_SIZE = 20;
 
+async function countEventPhotosWithPagination(eventId: string) {
+    let total = 0;
+    let page = 0;
+
+    while (true) {
+        const res = await api.getEventPhotos(eventId, page, PAGE_SIZE);
+        total += res.data.length;
+        if (res.data.length < PAGE_SIZE) break;
+        page += 1;
+    }
+
+    return total;
+}
+
 type MatchStep = "select" | "uploading" | "uploaded" | "matching" | "results";
 
 export function GuestEventPage() {
@@ -58,7 +72,7 @@ export function GuestEventPage() {
             .then((res) => {
                 setBrowsePhotos(res.data);
                 if (browsePage === 1) {
-                    api.getEventPhotos(id, 0, 999999).then((r) => setBrowseTotal(r.data.length)).catch(() => {});
+                    countEventPhotosWithPagination(id).then((count) => setBrowseTotal(count)).catch(() => {});
                 }
             })
             .catch(() => {});

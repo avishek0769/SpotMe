@@ -151,7 +151,8 @@ export async function uploadFileToS3(url: string, fields: Record<string, string>
     formData.append("file", file);
     const res = await fetch(url, { method: "POST", body: formData });
     if (!res.ok && res.status !== 204) throw new Error(`S3 upload failed: ${file.name}`);
-    return `${url}${key}`;
+    const base = url.endsWith("/") ? url : `${url}/`;
+    return `${base}${key}`;
 }
 
 export async function uploadEventPhotos(eventId: string, files: File[], onProgress?: (uploaded: number, total: number, phase: string) => void) {

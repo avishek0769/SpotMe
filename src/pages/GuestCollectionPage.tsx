@@ -7,6 +7,20 @@ import type { EventData, PhotoData, CollectionData } from "../api";
 
 const PAGE_SIZE = 20;
 
+async function countEventPhotosWithPagination(eventId: string) {
+    let total = 0;
+    let page = 0;
+
+    while (true) {
+        const res = await api.getEventPhotos(eventId, page, PAGE_SIZE);
+        total += res.data.length;
+        if (res.data.length < PAGE_SIZE) break;
+        page += 1;
+    }
+
+    return total;
+}
+
 type MatchStep = "select" | "uploading" | "uploaded" | "matching" | "done";
 
 export function GuestCollectionPage() {
@@ -59,6 +73,7 @@ export function GuestCollectionPage() {
             .then((res) => {
                 if (res.data?._id) {
                     setCollection(res.data);
+                    setMyPhotoTotal(Array.isArray(res.data.myPhotos) ? res.data.myPhotos.length : 0);
                 }
             })
             .catch(() => {});
@@ -80,16 +95,6 @@ export function GuestCollectionPage() {
                 setMyPhotos(photos);
             })
             .catch(console.error);
-
-        api.getCollectionPhotos(collection._id, 0, 999999)
-            .then((r) => {
-                const col = r.data[0];
-                const totalPhotos = col && Array.isArray(col.myPhotos)
-                    ? (col.myPhotos as PhotoData[]).length
-                    : 0;
-                setMyPhotoTotal(totalPhotos);
-            })
-            .catch(() => {});
     }, [collection, myPhotoPage]);
 
     useEffect(() => {
@@ -110,7 +115,7 @@ export function GuestCollectionPage() {
             .then((res) => {
                 setAllPhotos(res.data);
                 if (allPhotoPage === 1) {
-                    api.getEventPhotos(id, 0, 999999).then((r) => setAllPhotoTotal(r.data.length)).catch(() => {});
+                    countEventPhotosWithPagination(id).then((count) => setAllPhotoTotal(count)).catch(() => {});
                 }
             })
             .catch(console.error);
@@ -199,9 +204,11 @@ export function GuestCollectionPage() {
             if (colRes.data.length > 0) {
                 const photos = Array.isArray(colRes.data[0].myPhotos) ? colRes.data[0].myPhotos as PhotoData[] : [];
                 setMyPhotos(photos);
-                api.getCollectionPhotos(collection._id, 0, 999999).then((r) => {
-                    if (r.data.length > 0) setMyPhotoTotal((r.data[0].myPhotos as PhotoData[]).length);
-                }).catch(() => {});
+                const collectionRes = await api.getMyCollectionByEvent(id);
+                if (collectionRes.data) {
+                    setCollection(collectionRes.data);
+                    setMyPhotoTotal(Array.isArray(collectionRes.data.myPhotos) ? collectionRes.data.myPhotos.length : 0);
+                }
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : "Matching failed");
