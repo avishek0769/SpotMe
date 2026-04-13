@@ -1,11 +1,12 @@
 import { Router } from "express";
-import { verifyStrictJWT, verifyJWT } from "../middlewares/auth.middleware.js";
+import { verifyStrictJWT } from "../middlewares/auth.middleware.js";
 import {
     createEvent,
     getAllCreatedEvents,
     getAllSharedEvents,
     deleteEvent,
     editEvent,
+    uploadComplete,
     enqueueBatch,
     getDetails,
     getAllPhotos,
@@ -21,6 +22,7 @@ eventRouter.route("/details/:eventId").get(verifyStrictJWT, getDetails);
 eventRouter.route("/all-photos/:eventId").get(verifyStrictJWT, getAllPhotos);
 eventRouter.route("/all-guests/:eventId").get(verifyStrictJWT, getAllGuests);
 eventRouter.route("/edit/:eventId").patch(verifyStrictJWT, editEvent);
+eventRouter.route("/complete/:eventId").patch(verifyStrictJWT, uploadComplete);
 eventRouter.route("/delete/:eventId").delete(verifyStrictJWT, deleteEvent);
 eventRouter
     .route("/enqueue-batch/:eventId")

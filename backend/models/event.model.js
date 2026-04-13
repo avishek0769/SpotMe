@@ -33,7 +33,7 @@ const eventSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ["empty", "processing", "expired"],
+        enum: ["empty", "processing", "ready", "expired"],
         default: "empty",
     },
 });

@@ -50,7 +50,23 @@ const createEvent = asyncHandler(async (req, res) => {
 });
 
 const getAllCreatedEvents = asyncHandler(async (req, res) => {
-    const events = await Event.find({ userId: req.user._id });
+    const events = await Event.aggregate([
+        { $match: { userId: new mongoose.Types.ObjectId(req.user._id) } },
+        {
+            $lookup: {
+                from: "photos",
+                localField: "coverImage",
+                foreignField: "_id",
+                as: "coverImage",
+            },
+        },
+        {
+            $addFields: {
+                coverImage: { $arrayElemAt: ["$coverImage", 0] },
+            },
+        }
+    ])
+    
     return res
         .status(200)
         .json(
@@ -65,7 +81,23 @@ const getAllCreatedEvents = asyncHandler(async (req, res) => {
 const getAllSharedEvents = asyncHandler(async (req, res) => {
     const guests = await Guest.find({ userId: req.user._id });
     const eventIds = guests.map((g) => g.eventId);
-    const events = await Event.find({ _id: { $in: eventIds } });
+
+    const events = await Event.aggregate([
+        { $match: { _id: { $in: eventIds } } },
+        {
+            $lookup: {
+                from: "photos",
+                localField: "coverImage",
+                foreignField: "_id",
+                as: "coverImage",
+            },
+        },
+        {
+            $addFields: {
+                coverImage: { $arrayElemAt: ["$coverImage", 0] },
+            },
+        }
+    ])
 
     return res
         .status(200)
@@ -96,6 +128,22 @@ const editEvent = asyncHandler(async (req, res) => {
     const event = await Event.findByIdAndUpdate(eventId, updateData, {
         new: true,
     });
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, event, "Event updated successfully"));
+});
+
+const uploadComplete = asyncHandler(async (req, res) => {
+    const { eventId } = req.params;
+
+    const photo = await Photo.findOne({ eventId, type: "event" });
+
+    const event = await Event.findByIdAndUpdate(
+        eventId,
+        { status: "ready", coverImage: photo?._id || null },
+        { new: true },
+    );
 
     return res
         .status(200)
@@ -133,7 +181,7 @@ const deleteEvent = asyncHandler(async (req, res) => {
         Event.findByIdAndDelete(eventId),
         Photo.deleteMany({ eventId }),
         Guest.deleteMany({ eventId }),
-        qdrant.deleteCollection(`Event_${eventId}`).catch(() => {}),
+        qdrant.deleteCollection(`Event_${eventId}`).catch(() => { }),
     ]);
 
     return res
@@ -192,7 +240,7 @@ const getAllPhotos = asyncHandler(async (req, res) => {
 
     const event = await Event.findById(eventId);
     if (event.accessLevel === "spot") {
-        if(!req.user || event.userId.toString() !== req.user._id.toString()) {
+        if (!req.user || event.userId.toString() !== req.user._id.toString()) {
             throw new ApiError(403, "Access denied to photos of this event");
         }
     }
@@ -211,7 +259,22 @@ const getAllPhotos = asyncHandler(async (req, res) => {
 
 const getAllGuests = asyncHandler(async (req, res) => {
     const { eventId } = req.params;
-    const guests = await Guest.find({ eventId });
+    const guests = await Guest.aggregate([
+        { $match: { eventId: new mongoose.Types.ObjectId(eventId) } },
+        {
+            $lookup: {
+                from: "users",
+                localField: "userId",
+                foreignField: "_id",
+                as: "user",
+            },
+        },
+        {
+            $addFields: {
+                user: { $arrayElemAt: ["$user", 0] },
+            },
+        },
+    ]);
 
     return res
         .status(200)
@@ -224,6 +287,7 @@ export {
     getAllSharedEvents,
     deleteEvent,
     editEvent,
+    uploadComplete,
     enqueueBatch,
     getDetails,
     getAllPhotos,
