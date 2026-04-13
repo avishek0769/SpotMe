@@ -42,8 +42,7 @@ const sendVerificationCode = asyncHandler(async (req, res) => {
 
     if (!user) {
         await User.create({ email });
-    }
-    else if (user.isVerified) {
+    } else if (user.isVerified) {
         throw new ApiError(401, "User with this email already exists");
     }
 
@@ -83,7 +82,11 @@ const verifyEmail = asyncHandler(async (req, res) => {
     await redis.del(email);
 
     res.status(200).json(
-        new ApiResponse(200, { ...user._doc }, "Email verified successfully !!"),
+        new ApiResponse(
+            200,
+            { ...user._doc },
+            "Email verified successfully !!",
+        ),
     );
 });
 
@@ -101,9 +104,12 @@ const userRegister = asyncHandler(async (req, res) => {
     let createdUser = await User.findOne({ email, isVerified: true }).select(
         "-password -refreshToken",
     );
-    if (!createdUser) throw new ApiError(500, "Something went wrong while registering");
+    if (!createdUser)
+        throw new ApiError(500, "Something went wrong while registering");
 
-    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(createdUser._id);
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+        createdUser._id,
+    );
 
     createdUser.fullname = fullname;
     createdUser.username = username;
@@ -197,7 +203,8 @@ const refreshAuthTokens = asyncHandler(async (req, res) => {
             "Unauthorised access -> Refresh token did not match",
         );
 
-    const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
+    const { accessToken, newRefreshToken } =
+        await generateAccessAndRefreshTokens(user._id);
 
     res.status(200)
         .cookie("accessToken", accessToken, AccessOptions)
@@ -241,7 +248,11 @@ const sendResetCode = asyncHandler(async (req, res) => {
     });
 
     res.status(200).json(
-        new ApiResponse(200, { emailSent: true }, "Reset code sent successfully !!"),
+        new ApiResponse(
+            200,
+            { emailSent: true },
+            "Reset code sent successfully !!",
+        ),
     );
 });
 
@@ -268,7 +279,6 @@ const resetPassword = asyncHandler(async (req, res) => {
         new ApiResponse(200, { reset: true }, "Password reset successfully !!"),
     );
 });
-
 
 export {
     sendVerificationCode,

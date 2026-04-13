@@ -1,6 +1,15 @@
 import { Router } from "express";
 import { verifyStrictJWT, verifyJWT } from "../middlewares/auth.middleware.js";
-import { createEvent, getAllEvents, deleteEvent, editEvent, enqueueBatch, getDetails, getAllPhotos, getAllGuests } from "../controllers/event.controller.js";
+import {
+    createEvent,
+    getAllEvents,
+    deleteEvent,
+    editEvent,
+    enqueueBatch,
+    getDetails,
+    getAllPhotos,
+    getAllGuests,
+} from "../controllers/event.controller.js";
 
 const eventRouter = Router();
 
@@ -11,6 +20,8 @@ eventRouter.route("/all-photos/:eventId").get(verifyStrictJWT, getAllPhotos);
 eventRouter.route("/all-guests/:eventId").get(verifyStrictJWT, getAllGuests);
 eventRouter.route("/edit/:eventId").patch(verifyStrictJWT, editEvent);
 eventRouter.route("/delete/:eventId").delete(verifyStrictJWT, deleteEvent);
-eventRouter.route("/enqueue-batch/:eventId").post(verifyStrictJWT, enqueueBatch);
+eventRouter
+    .route("/enqueue-batch/:eventId")
+    .post(verifyStrictJWT, enqueueBatch);
 
 export default eventRouter;

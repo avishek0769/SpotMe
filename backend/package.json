@@ -1,1 +1,35 @@
-{"name":"backend","version":"1.0.0","description":"","main":"index.js","scripts":{"dev":"node --watch index.js"},"keywords":[],"author":"","license":"ISC","packageManager":"pnpm@10.30.3","type":"module","dependencies":{"@aws-sdk/client-s3":"^3.1026.0","@aws-sdk/s3-request-presigner":"^3.1028.0","@qdrant/js-client-rest":"^1.17.0","@tensorflow/tfjs-node":"^4.22.0","@vladmandic/face-api":"^1.7.15","archiver":"^7.0.1","bcrypt":"^6.0.0","bullmq":"^5.73.3","canvas":"^3.2.3","cookie-parser":"^1.4.7","cors":"^2.8.6","dotenv":"^17.4.1","express":"^5.2.1","ioredis":"^5.10.1","jsonwebtoken":"^9.0.3","mongoose":"^9.4.1","multer":"^2.1.1","resend":"^6.10.0","uuid":"^13.0.0"}}
+{
+    "name": "backend",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "dev": "node --watch index.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "packageManager": "pnpm@10.30.3",
+    "type": "module",
+    "dependencies": {
+        "@aws-sdk/client-s3": "^3.1026.0",
+        "@aws-sdk/s3-request-presigner": "^3.1028.0",
+        "@qdrant/js-client-rest": "^1.17.0",
+        "@tensorflow/tfjs-node": "^4.22.0",
+        "@vladmandic/face-api": "^1.7.15",
+        "archiver": "^7.0.1",
+        "bcrypt": "^6.0.0",
+        "bullmq": "^5.73.3",
+        "canvas": "^3.2.3",
+        "cookie-parser": "^1.4.7",
+        "cors": "^2.8.6",
+        "dotenv": "^17.4.1",
+        "express": "^5.2.1",
+        "ioredis": "^5.10.1",
+        "jsonwebtoken": "^9.0.3",
+        "mongoose": "^9.4.1",
+        "multer": "^2.1.1",
+        "resend": "^6.10.0",
+        "uuid": "^13.0.0"
+    }
+}

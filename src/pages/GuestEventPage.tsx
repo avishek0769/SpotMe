@@ -25,7 +25,10 @@ export function GuestEventPage() {
         setGuestMatchingUploads,
     } = useAppContext();
 
-    const eventItem = useMemo(() => events.find((eventData) => eventData.id === id), [events, id]);
+    const eventItem = useMemo(
+        () => events.find((eventData) => eventData.id === id),
+        [events, id],
+    );
 
     const [guestName, setGuestName] = useState(currentUser?.name ?? "");
     const [isMatching, setIsMatching] = useState(false);
@@ -39,7 +42,8 @@ export function GuestEventPage() {
             return null;
         }
         return eventItem.guests.find(
-            (guest) => guest.name.toLowerCase() === guestName.trim().toLowerCase(),
+            (guest) =>
+                guest.name.toLowerCase() === guestName.trim().toLowerCase(),
         );
     }, [eventItem, guestName]);
 
@@ -48,8 +52,12 @@ export function GuestEventPage() {
             return [];
         }
         return guestRecord.collectionPhotoIds
-            .map((photoId) => eventItem.photos.find((photo) => photo.id === photoId))
-            .filter((photo): photo is NonNullable<typeof photo> => Boolean(photo));
+            .map((photoId) =>
+                eventItem.photos.find((photo) => photo.id === photoId),
+            )
+            .filter((photo): photo is NonNullable<typeof photo> =>
+                Boolean(photo),
+            );
     }, [eventItem, guestRecord]);
 
     if (!eventItem) {
@@ -62,8 +70,14 @@ export function GuestEventPage() {
 
     const guestEvent = eventItem;
 
-    const browsePhotos = guestEvent.photos.slice((browsePage - 1) * PAGE_SIZE, browsePage * PAGE_SIZE);
-    const pagedMyPhotos = myPhotos.slice((myPhotosPage - 1) * PAGE_SIZE, myPhotosPage * PAGE_SIZE);
+    const browsePhotos = guestEvent.photos.slice(
+        (browsePage - 1) * PAGE_SIZE,
+        browsePage * PAGE_SIZE,
+    );
+    const pagedMyPhotos = myPhotos.slice(
+        (myPhotosPage - 1) * PAGE_SIZE,
+        myPhotosPage * PAGE_SIZE,
+    );
 
     function runSearch() {
         if (!guestName.trim()) {
@@ -77,18 +91,27 @@ export function GuestEventPage() {
         window.setTimeout(() => {
             const normalizedName = guestName.trim();
             const existingIds = guestRecord?.collectionPhotoIds ?? [];
-            const pool = guestEvent.photos.filter((photo) => !existingIds.includes(photo.id));
+            const pool = guestEvent.photos.filter(
+                (photo) => !existingIds.includes(photo.id),
+            );
 
             const selfieCount = 1 + Math.floor(Math.random() * 3);
-            const matchingUploads = Array.from({ length: selfieCount }, (_, index) => {
-                const seed = Date.now() + index;
-                return {
-                    id: seed,
-                    url: `https://picsum.photos/seed/upload-${seed}/400/300`,
-                    uploadedAt: new Date().toISOString(),
-                };
-            });
-            setGuestMatchingUploads(guestEvent.id, normalizedName, matchingUploads);
+            const matchingUploads = Array.from(
+                { length: selfieCount },
+                (_, index) => {
+                    const seed = Date.now() + index;
+                    return {
+                        id: seed,
+                        url: `https://picsum.photos/seed/upload-${seed}/400/300`,
+                        uploadedAt: new Date().toISOString(),
+                    };
+                },
+            );
+            setGuestMatchingUploads(
+                guestEvent.id,
+                normalizedName,
+                matchingUploads,
+            );
 
             if (existingIds.length > 0) {
                 const newPhotos = pool.slice(0, 3);
@@ -98,9 +121,13 @@ export function GuestEventPage() {
                     newPhotos.map((photo) => photo.id),
                     { merge: true, updateSearchedAt: true },
                 );
-                setMessage(`${newPhotos.length} new photos added to your collection`);
+                setMessage(
+                    `${newPhotos.length} new photos added to your collection`,
+                );
             } else {
-                const firstSet = guestEvent.photos.slice(0, 12).map((photo) => photo.id);
+                const firstSet = guestEvent.photos
+                    .slice(0, 12)
+                    .map((photo) => photo.id);
                 upsertGuestCollection(guestEvent.id, normalizedName, firstSet, {
                     merge: false,
                     updateSearchedAt: true,
@@ -114,7 +141,9 @@ export function GuestEventPage() {
 
     function toggleMyPhoto(photoId: number) {
         setSelectedMyPhotoIds((prev) =>
-            prev.includes(photoId) ? prev.filter((idNum) => idNum !== photoId) : [...prev, photoId],
+            prev.includes(photoId)
+                ? prev.filter((idNum) => idNum !== photoId)
+                : [...prev, photoId],
         );
     }
 
@@ -122,7 +151,11 @@ export function GuestEventPage() {
         if (!selectedMyPhotoIds.length || !guestName.trim()) {
             return;
         }
-        removeGuestCollectionPhotos(guestEvent.id, guestName.trim(), selectedMyPhotoIds);
+        removeGuestCollectionPhotos(
+            guestEvent.id,
+            guestName.trim(),
+            selectedMyPhotoIds,
+        );
         setSelectedMyPhotoIds([]);
     }
 
@@ -131,7 +164,9 @@ export function GuestEventPage() {
             return;
         }
         removeGuestCollectionPhotos(guestEvent.id, guestName.trim(), [photoId]);
-        setSelectedMyPhotoIds((prev) => prev.filter((idNum) => idNum !== photoId));
+        setSelectedMyPhotoIds((prev) =>
+            prev.filter((idNum) => idNum !== photoId),
+        );
     }
 
     function downloadAll() {
@@ -145,8 +180,13 @@ export function GuestEventPage() {
     return (
         <div className="page-wrap">
             <div className="flex items-center justify-between gap-2">
-                <h1 className="text-2xl font-bold tracking-tight">{guestEvent.name}</h1>
-                <Link to="/" className="text-sm text-[#9eb7ff] hover:text-[#c8d8ff]">
+                <h1 className="text-2xl font-bold tracking-tight">
+                    {guestEvent.name}
+                </h1>
+                <Link
+                    to="/"
+                    className="text-sm text-[#9eb7ff] hover:text-[#c8d8ff]"
+                >
                     SpotMe Home
                 </Link>
             </div>
@@ -154,7 +194,8 @@ export function GuestEventPage() {
 
             {!currentUser ? (
                 <div className="sticky top-16 z-30 mt-3 rounded-lg border border-[#315188] bg-[#12284d] p-3 text-sm text-[#cfe0ff]">
-                    You are viewing as a guest. Sign in to save your collection and access it later.
+                    You are viewing as a guest. Sign in to save your collection
+                    and access it later.
                 </div>
             ) : null}
 
@@ -164,14 +205,20 @@ export function GuestEventPage() {
                     <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                         {browsePhotos.map((photo) => (
                             <div key={photo.id} className="photo-tile p-2">
-                                <img src={photo.url} alt="Event" className="rounded-md" />
+                                <img
+                                    src={photo.url}
+                                    alt="Event"
+                                    className="rounded-md"
+                                />
                             </div>
                         ))}
                     </div>
                     {guestEvent.photos.length === 0 ? (
                         <div className="card mt-4 p-8 text-center">
                             <p className="text-3xl">🖼️</p>
-                            <p className="mt-2 text-base font-medium">No photos to browse yet</p>
+                            <p className="mt-2 text-base font-medium">
+                                No photos to browse yet
+                            </p>
                         </div>
                     ) : null}
                     <Pagination
@@ -210,7 +257,9 @@ export function GuestEventPage() {
                     </button>
                 </div>
 
-                <p className="mt-3 text-sm muted">{toDaysAgoText(guestRecord?.lastSearchedAt ?? null)}</p>
+                <p className="mt-3 text-sm muted">
+                    {toDaysAgoText(guestRecord?.lastSearchedAt ?? null)}
+                </p>
                 {guestRecord ? (
                     <button
                         type="button"
@@ -234,7 +283,11 @@ export function GuestEventPage() {
                 ) : null}
 
                 <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                    <button type="button" onClick={downloadAll} className="btn-primary px-3 py-2 text-sm">
+                    <button
+                        type="button"
+                        onClick={downloadAll}
+                        className="btn-primary px-3 py-2 text-sm"
+                    >
                         Download All
                     </button>
                     <button
@@ -255,12 +308,21 @@ export function GuestEventPage() {
 
                 <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     {pagedMyPhotos.map((photo) => (
-                        <div key={photo.id} className="photo-tile space-y-1 p-2 text-xs">
-                            <img src={photo.url} alt="My matched" className="rounded-md" />
+                        <div
+                            key={photo.id}
+                            className="photo-tile space-y-1 p-2 text-xs"
+                        >
+                            <img
+                                src={photo.url}
+                                alt="My matched"
+                                className="rounded-md"
+                            />
                             <label className="mt-2 flex items-center gap-2 text-[#b8c6e4]">
                                 <input
                                     type="checkbox"
-                                    checked={selectedMyPhotoIds.includes(photo.id)}
+                                    checked={selectedMyPhotoIds.includes(
+                                        photo.id,
+                                    )}
                                     onChange={() => toggleMyPhoto(photo.id)}
                                 />
                                 #{photo.id}
@@ -278,8 +340,13 @@ export function GuestEventPage() {
                 {myPhotos.length === 0 ? (
                     <div className="card mt-4 p-8 text-center">
                         <p className="text-3xl">🔎</p>
-                        <p className="mt-2 text-base font-medium">No matched photos yet</p>
-                        <p className="mt-1 text-sm muted">Upload a selfie and SpotMe will build your collection.</p>
+                        <p className="mt-2 text-base font-medium">
+                            No matched photos yet
+                        </p>
+                        <p className="mt-1 text-sm muted">
+                            Upload a selfie and SpotMe will build your
+                            collection.
+                        </p>
                     </div>
                 ) : null}
 

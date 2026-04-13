@@ -8,7 +8,14 @@ import {
     useState,
     type ReactNode,
 } from "react";
-import type { AppUser, EventData, EventGuest, EventStatus, EventType, MatchingUpload } from "../types";
+import type {
+    AppUser,
+    EventData,
+    EventGuest,
+    EventStatus,
+    EventType,
+    MatchingUpload,
+} from "../types";
 
 interface CreateEventPayload {
     name: string;
@@ -25,7 +32,10 @@ interface AppContextValue {
     logout: () => void;
     createEvent: (payload: CreateEventPayload) => Promise<EventData>;
     deleteEvent: (eventId: string) => void;
-    updateEventMeta: (eventId: string, payload: { name: string; expiryDate: string }) => void;
+    updateEventMeta: (
+        eventId: string,
+        payload: { name: string; expiryDate: string },
+    ) => void;
     setEventStatus: (eventId: string, status: EventStatus) => void;
     setEventAccessLevel: (eventId: string, level: 1 | 2) => void;
     addPhotosToEvent: (eventId: string, count: number) => void;
@@ -35,8 +45,16 @@ interface AppContextValue {
         photoIds: number[],
         options?: { merge?: boolean; updateSearchedAt?: boolean },
     ) => void;
-    setGuestMatchingUploads: (eventId: string, guestName: string, uploads: MatchingUpload[]) => void;
-    removeGuestCollectionPhotos: (eventId: string, guestName: string, photoIds: number[]) => void;
+    setGuestMatchingUploads: (
+        eventId: string,
+        guestName: string,
+        uploads: MatchingUpload[],
+    ) => void;
+    removeGuestCollectionPhotos: (
+        eventId: string,
+        guestName: string,
+        photoIds: number[],
+    ) => void;
     getMyEvents: () => EventData[];
     getSharedEvents: () => EventData[];
 }
@@ -63,7 +81,10 @@ const createPhotos = (startSeed: number, count: number) =>
         };
     });
 
-const createMatchingUploads = (startSeed: number, count: number): MatchingUpload[] =>
+const createMatchingUploads = (
+    startSeed: number,
+    count: number,
+): MatchingUpload[] =>
     Array.from({ length: count }, (_, index) => {
         const id = startSeed + index;
         return {
@@ -97,7 +118,9 @@ function loadUsersFromStorage(): AppUser[] {
     }
     try {
         const parsed = JSON.parse(raw) as AppUser[];
-        return Array.isArray(parsed) && parsed.length > 0 ? parsed : initialUsers;
+        return Array.isArray(parsed) && parsed.length > 0
+            ? parsed
+            : initialUsers;
     } catch {
         return initialUsers;
     }
@@ -178,7 +201,9 @@ const initialEvents: EventData[] = [
 export function AppProvider({ children }: { children: ReactNode }) {
     const [users, setUsers] = useState<AppUser[]>(() => loadUsersFromStorage());
     const [events, setEvents] = useState<EventData[]>(initialEvents);
-    const [currentUser, setCurrentUser] = useState<AppUser | null>(() => loadSessionFromStorage());
+    const [currentUser, setCurrentUser] = useState<AppUser | null>(() =>
+        loadSessionFromStorage(),
+    );
 
     useEffect(() => {
         localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
@@ -186,7 +211,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if (currentUser) {
-            localStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(currentUser));
+            localStorage.setItem(
+                LOCAL_SESSION_KEY,
+                JSON.stringify(currentUser),
+            );
             return;
         }
         localStorage.removeItem(LOCAL_SESSION_KEY);
@@ -198,7 +226,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 setTimeout(() => {
                     const normalizedEmail = email.trim().toLowerCase();
                     const found = users.find(
-                        (user) => user.email.toLowerCase() === normalizedEmail && user.password === password,
+                        (user) =>
+                            user.email.toLowerCase() === normalizedEmail &&
+                            user.password === password,
                     );
                     if (!found) {
                         resolve(false);
@@ -216,7 +246,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             new Promise<boolean>((resolve) => {
                 setTimeout(() => {
                     const normalizedEmail = email.trim().toLowerCase();
-                    const exists = users.some((user) => user.email === normalizedEmail);
+                    const exists = users.some(
+                        (user) => user.email === normalizedEmail,
+                    );
                     if (exists) {
                         resolve(false);
                         return;
@@ -253,7 +285,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
                         type: payload.type,
                         status: "Uploading",
                         accessLevel: 1,
-                        photographerId: currentUser?.id ?? "u-photographer-rahul",
+                        photographerId:
+                            currentUser?.id ?? "u-photographer-rahul",
                         sharedWithUserIds: [],
                         expiryDate: payload.date,
                         photos: createPhotos(seedBase, 0),
@@ -267,7 +300,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
 
     const deleteEvent = useCallback((eventId: string) => {
-        setEvents((prev) => prev.filter((eventItem) => eventItem.id !== eventId));
+        setEvents((prev) =>
+            prev.filter((eventItem) => eventItem.id !== eventId),
+        );
     }, []);
 
     const updateEventMeta = useCallback(
@@ -287,16 +322,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
         [],
     );
 
-    const setEventStatus = useCallback((eventId: string, status: EventStatus) => {
-        setEvents((prev) =>
-            prev.map((eventItem) => (eventItem.id === eventId ? { ...eventItem, status } : eventItem)),
-        );
-    }, []);
+    const setEventStatus = useCallback(
+        (eventId: string, status: EventStatus) => {
+            setEvents((prev) =>
+                prev.map((eventItem) =>
+                    eventItem.id === eventId
+                        ? { ...eventItem, status }
+                        : eventItem,
+                ),
+            );
+        },
+        [],
+    );
 
     const setEventAccessLevel = useCallback((eventId: string, level: 1 | 2) => {
         setEvents((prev) =>
             prev.map((eventItem) =>
-                eventItem.id === eventId ? { ...eventItem, accessLevel: level } : eventItem,
+                eventItem.id === eventId
+                    ? { ...eventItem, accessLevel: level }
+                    : eventItem,
             ),
         );
     }, []);
@@ -310,7 +354,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 if (eventItem.id !== eventId) {
                     return eventItem;
                 }
-                const maxId = eventItem.photos.reduce((max, photo) => Math.max(max, photo.id), 0);
+                const maxId = eventItem.photos.reduce(
+                    (max, photo) => Math.max(max, photo.id),
+                    0,
+                );
                 const nextSeed = maxId + 1;
                 const freshPhotos = createPhotos(nextSeed, count);
                 return {
@@ -335,7 +382,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     }
                     const mergedGuests = [...eventItem.guests];
                     const targetIdx = mergedGuests.findIndex(
-                        (guest) => guest.name.toLowerCase() === guestName.toLowerCase(),
+                        (guest) =>
+                            guest.name.toLowerCase() ===
+                            guestName.toLowerCase(),
                     );
 
                     const nextGuest: EventGuest =
@@ -345,7 +394,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
                                   collectionPhotoIds: options?.merge
                                       ? Array.from(
                                             new Set([
-                                                ...mergedGuests[targetIdx].collectionPhotoIds,
+                                                ...mergedGuests[targetIdx]
+                                                    .collectionPhotoIds,
                                                 ...photoIds,
                                             ]),
                                         )
@@ -359,8 +409,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
                                   name: guestName,
                                   accessedAt: nowIso(),
                                   collectionPhotoIds: photoIds,
-                                  lastSearchedAt: options?.updateSearchedAt ? nowIso() : null,
-                                    matchingUploads: [],
+                                  lastSearchedAt: options?.updateSearchedAt
+                                      ? nowIso()
+                                      : null,
+                                  matchingUploads: [],
                               };
 
                     if (targetIdx >= 0) {
@@ -388,7 +440,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     }
 
                     const idx = eventItem.guests.findIndex(
-                        (guest) => guest.name.toLowerCase() === guestName.toLowerCase(),
+                        (guest) =>
+                            guest.name.toLowerCase() ===
+                            guestName.toLowerCase(),
                     );
 
                     if (idx < 0) {
@@ -441,9 +495,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
                             guest.name.toLowerCase() === guestName.toLowerCase()
                                 ? {
                                       ...guest,
-                                      collectionPhotoIds: guest.collectionPhotoIds.filter(
-                                          (id) => !photoIds.includes(id),
-                                      ),
+                                      collectionPhotoIds:
+                                          guest.collectionPhotoIds.filter(
+                                              (id) => !photoIds.includes(id),
+                                          ),
                                   }
                                 : guest,
                         ),
@@ -458,14 +513,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (!currentUser) {
             return [];
         }
-        return events.filter((eventItem) => eventItem.photographerId === currentUser.id);
+        return events.filter(
+            (eventItem) => eventItem.photographerId === currentUser.id,
+        );
     }, [currentUser, events]);
 
     const getSharedEvents = useCallback(() => {
         if (!currentUser) {
             return [];
         }
-        return events.filter((eventItem) => eventItem.sharedWithUserIds.includes(currentUser.id));
+        return events.filter((eventItem) =>
+            eventItem.sharedWithUserIds.includes(currentUser.id),
+        );
     }, [currentUser, events]);
 
     const value = useMemo<AppContextValue>(

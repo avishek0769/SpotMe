@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import {
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+    type ChangeEvent,
+    type DragEvent,
+} from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { Pagination } from "../components/Pagination";
 import { useAppContext } from "../context/AppContext";
@@ -38,7 +45,10 @@ export function EventManagementPage() {
         removeGuestCollectionPhotos,
     } = useAppContext();
 
-    const eventItem = useMemo(() => events.find((eventData) => eventData.id === id), [events, id]);
+    const eventItem = useMemo(
+        () => events.find((eventData) => eventData.id === id),
+        [events, id],
+    );
 
     const [activeTab, setActiveTab] = useState<EventTab>("photos");
     const [photoPage, setPhotoPage] = useState(1);
@@ -47,11 +57,19 @@ export function EventManagementPage() {
     const [uploadTotalUnits, setUploadTotalUnits] = useState(800);
     const [uploadingCount, setUploadingCount] = useState(0);
     const [indexingProgress, setIndexingProgress] = useState(0);
-    const [uploadPhase, setUploadPhase] = useState<"idle" | "uploading" | "indexing">("idle");
-    const [guestPhotoSelections, setGuestPhotoSelections] = useState<Record<string, number[]>>({});
-    const [expandedGuestName, setExpandedGuestName] = useState<string | null>(null);
+    const [uploadPhase, setUploadPhase] = useState<
+        "idle" | "uploading" | "indexing"
+    >("idle");
+    const [guestPhotoSelections, setGuestPhotoSelections] = useState<
+        Record<string, number[]>
+    >({});
+    const [expandedGuestName, setExpandedGuestName] = useState<string | null>(
+        null,
+    );
     const [settingsName, setSettingsName] = useState(eventItem?.name ?? "");
-    const [settingsExpiry, setSettingsExpiry] = useState(eventItem?.expiryDate ?? "");
+    const [settingsExpiry, setSettingsExpiry] = useState(
+        eventItem?.expiryDate ?? "",
+    );
     const [copiedLink, setCopiedLink] = useState(false);
 
     const uploadInputRef = useRef<HTMLInputElement | null>(null);
@@ -82,11 +100,16 @@ export function EventManagementPage() {
             ? `${window.location.origin}/events/${managedEvent.id}/guest`
             : `/events/${managedEvent.id}/guest`;
 
-    const photoPageItems = managedEvent.photos.slice((photoPage - 1) * PAGE_SIZE, photoPage * PAGE_SIZE);
+    const photoPageItems = managedEvent.photos.slice(
+        (photoPage - 1) * PAGE_SIZE,
+        photoPage * PAGE_SIZE,
+    );
 
     function togglePhotoSelection(photoId: number) {
         setSelectedPhotoIds((prev) =>
-            prev.includes(photoId) ? prev.filter((idNum) => idNum !== photoId) : [...prev, photoId],
+            prev.includes(photoId)
+                ? prev.filter((idNum) => idNum !== photoId)
+                : [...prev, photoId],
         );
     }
 
@@ -116,13 +139,19 @@ export function EventManagementPage() {
 
                 let idx = 0;
                 const indexingTimer = window.setInterval(() => {
-                    idx = Math.min(100, idx + (3 + Math.floor(Math.random() * 9)));
+                    idx = Math.min(
+                        100,
+                        idx + (3 + Math.floor(Math.random() * 9)),
+                    );
                     setIndexingProgress(idx);
                     if (idx >= 100) {
                         window.clearInterval(indexingTimer);
                         setUploadPhase("idle");
                         setEventStatus(managedEvent.id, "Ready");
-                        addPhotosToEvent(managedEvent.id, selectedFileCount * 5);
+                        addPhotosToEvent(
+                            managedEvent.id,
+                            selectedFileCount * 5,
+                        );
                     }
                 }, 250);
             }
@@ -158,7 +187,9 @@ export function EventManagementPage() {
         if (!guest) {
             return;
         }
-        const candidate = managedEvent.photos.find((photo) => !guest.collectionPhotoIds.includes(photo.id));
+        const candidate = managedEvent.photos.find(
+            (photo) => !guest.collectionPhotoIds.includes(photo.id),
+        );
         if (!candidate) {
             return;
         }
@@ -212,7 +243,10 @@ export function EventManagementPage() {
     return (
         <div className="page-wrap">
             <div className="mb-3 flex items-center justify-between gap-3">
-                <Link to="/dashboard" className="text-sm text-[#9eb7ff] hover:text-[#c8d8ff]">
+                <Link
+                    to="/dashboard"
+                    className="text-sm text-[#9eb7ff] hover:text-[#c8d8ff]"
+                >
                     Back to Dashboard
                 </Link>
                 <span className="rounded-full border border-[#334563] bg-[#121d32] px-3 py-1 text-xs text-[#9fb2d3]">
@@ -223,30 +257,42 @@ export function EventManagementPage() {
             <header className="card p-5 sm:p-6">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{managedEvent.name}</h1>
-                        <p className="mt-2 text-sm muted">Date: {managedEvent.date}</p>
+                        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                            {managedEvent.name}
+                        </h1>
+                        <p className="mt-2 text-sm muted">
+                            Date: {managedEvent.date}
+                        </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                         <span className="status-pill border border-[#384969] bg-[#1a2640] text-[#ced9ef]">
                             {managedEvent.type}
                         </span>
-                        <span className={getStatusClass(managedEvent.status)}>{managedEvent.status}</span>
+                        <span className={getStatusClass(managedEvent.status)}>
+                            {managedEvent.status}
+                        </span>
                     </div>
                 </div>
 
                 <div className="mt-4 grid gap-2 sm:grid-cols-3">
                     <div className="rounded-lg border border-[#2e3b56] bg-[#111a2c] p-3">
                         <p className="text-xs muted">Total Photos</p>
-                        <p className="mt-1 text-lg font-semibold text-[#e7efff]">{managedEvent.photos.length}</p>
+                        <p className="mt-1 text-lg font-semibold text-[#e7efff]">
+                            {managedEvent.photos.length}
+                        </p>
                     </div>
                     <div className="rounded-lg border border-[#2e3b56] bg-[#111a2c] p-3">
                         <p className="text-xs muted">Guest Records</p>
-                        <p className="mt-1 text-lg font-semibold text-[#e7efff]">{managedEvent.guests.length}</p>
+                        <p className="mt-1 text-lg font-semibold text-[#e7efff]">
+                            {managedEvent.guests.length}
+                        </p>
                     </div>
                     <div className="rounded-lg border border-[#2e3b56] bg-[#111a2c] p-3">
                         <p className="text-xs muted">Access Level</p>
                         <p className="mt-1 text-lg font-semibold text-[#e7efff]">
-                            {managedEvent.accessLevel === 1 ? "Spot Only" : "Browse and Spot"}
+                            {managedEvent.accessLevel === 1
+                                ? "Spot Only"
+                                : "Browse and Spot"}
                         </p>
                     </div>
                 </div>
@@ -254,7 +300,9 @@ export function EventManagementPage() {
 
             <div className="mt-4 overflow-x-auto">
                 <div className="inline-flex min-w-full rounded-xl border border-[#2a364d] bg-[#121a2a] p-1 sm:min-w-0">
-                    {(["photos", "guests", "access", "settings"] as EventTab[]).map((tab) => (
+                    {(
+                        ["photos", "guests", "access", "settings"] as EventTab[]
+                    ).map((tab) => (
                         <button
                             key={tab}
                             type="button"
@@ -275,7 +323,9 @@ export function EventManagementPage() {
                 <section className="card mt-4 p-5 sm:p-6">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <h2 className="text-lg font-semibold">Photos</h2>
-                        <p className="text-sm muted">Selected: {selectedPhotoIds.length}</p>
+                        <p className="text-sm muted">
+                            Selected: {selectedPhotoIds.length}
+                        </p>
                     </div>
 
                     <div
@@ -283,8 +333,12 @@ export function EventManagementPage() {
                         onDrop={onUploadDrop}
                         onDragOver={(e) => e.preventDefault()}
                     >
-                        <p className="text-sm text-[#d4e1f8]">Drag and drop photos here</p>
-                        <p className="mt-1 text-xs muted">or choose files from your device</p>
+                        <p className="text-sm text-[#d4e1f8]">
+                            Drag and drop photos here
+                        </p>
+                        <p className="mt-1 text-xs muted">
+                            or choose files from your device
+                        </p>
                         <input
                             ref={uploadInputRef}
                             type="file"
@@ -304,16 +358,24 @@ export function EventManagementPage() {
                     {uploadPhase === "uploading" ? (
                         <div className="mt-4 card p-4">
                             <p className="text-sm text-[#d5e0f8]">
-                                Uploading {uploadUnits}/{uploadTotalUnits} ({uploadingCount} files)
+                                Uploading {uploadUnits}/{uploadTotalUnits} (
+                                {uploadingCount} files)
                             </p>
                             <div className="mt-2 flex items-center justify-between text-xs muted">
                                 <span>Progress</span>
-                                <span>{Math.round((uploadUnits / uploadTotalUnits) * 100)}%</span>
+                                <span>
+                                    {Math.round(
+                                        (uploadUnits / uploadTotalUnits) * 100,
+                                    )}
+                                    %
+                                </span>
                             </div>
                             <div className="mt-2 h-2.5 w-full rounded-full bg-[#23314a]">
                                 <div
                                     className="h-2.5 rounded-full bg-[#4f7cff]"
-                                    style={{ width: `${(uploadUnits / uploadTotalUnits) * 100}%` }}
+                                    style={{
+                                        width: `${(uploadUnits / uploadTotalUnits) * 100}%`,
+                                    }}
                                 />
                             </div>
                         </div>
@@ -321,7 +383,9 @@ export function EventManagementPage() {
 
                     {uploadPhase === "indexing" ? (
                         <div className="mt-4 card p-4">
-                            <p className="text-sm text-[#d5e0f8]">Indexing faces, you can close this tab</p>
+                            <p className="text-sm text-[#d5e0f8]">
+                                Indexing faces, you can close this tab
+                            </p>
                             <div className="mt-2 flex items-center justify-between text-xs muted">
                                 <span>Progress</span>
                                 <span>{indexingProgress}%</span>
@@ -338,13 +402,24 @@ export function EventManagementPage() {
                     <div className="mt-6">
                         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                             {photoPageItems.map((photo) => (
-                                <label key={photo.id} className="photo-tile block p-2 text-xs">
-                                    <img src={photo.url} alt="Event" className="rounded-md" />
+                                <label
+                                    key={photo.id}
+                                    className="photo-tile block p-2 text-xs"
+                                >
+                                    <img
+                                        src={photo.url}
+                                        alt="Event"
+                                        className="rounded-md"
+                                    />
                                     <span className="mt-2 flex items-center gap-2 text-[#b8c6e4]">
                                         <input
                                             type="checkbox"
-                                            checked={selectedPhotoIds.includes(photo.id)}
-                                            onChange={() => togglePhotoSelection(photo.id)}
+                                            checked={selectedPhotoIds.includes(
+                                                photo.id,
+                                            )}
+                                            onChange={() =>
+                                                togglePhotoSelection(photo.id)
+                                            }
                                             className="h-4 w-4 rounded border-[#5b6f98] bg-[#0f1625] accent-[#4f7cff]"
                                         />
                                         Photo #{photo.id}
@@ -355,8 +430,12 @@ export function EventManagementPage() {
                         {managedEvent.photos.length === 0 ? (
                             <div className="card mt-4 p-8 text-center">
                                 <p className="text-3xl">🖼️</p>
-                                <p className="mt-2 text-base font-medium">No photos uploaded yet</p>
-                                <p className="mt-1 text-sm muted">Upload event photos to start indexing faces.</p>
+                                <p className="mt-2 text-base font-medium">
+                                    No photos uploaded yet
+                                </p>
+                                <p className="mt-1 text-sm muted">
+                                    Upload event photos to start indexing faces.
+                                </p>
                             </div>
                         ) : null}
                         <Pagination
@@ -373,7 +452,9 @@ export function EventManagementPage() {
                 <section className="card mt-4 p-5 sm:p-6">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <h2 className="text-lg font-semibold">Guests</h2>
-                        <p className="text-xs text-[#9fb2d3]">Use View Collection to inspect matched photos</p>
+                        <p className="text-xs text-[#9fb2d3]">
+                            Use View Collection to inspect matched photos
+                        </p>
                     </div>
                     <p className="mt-3 rounded-lg border border-[#2f4669] bg-[#13213a] p-3 text-sm text-[#c9d8f2]">
                         You cannot see the photos guests uploaded for matching
@@ -396,19 +477,27 @@ export function EventManagementPage() {
                                         className="border-b border-[#1f2a3e] hover:bg-[#121d31]"
                                     >
                                         <td className="p-3">{guest.name}</td>
-                                        <td className="p-3">{formatWhen(guest.accessedAt)}</td>
-                                        <td className="p-3">{guest.collectionPhotoIds.length}</td>
+                                        <td className="p-3">
+                                            {formatWhen(guest.accessedAt)}
+                                        </td>
+                                        <td className="p-3">
+                                            {guest.collectionPhotoIds.length}
+                                        </td>
                                         <td className="p-3">
                                             <button
                                                 type="button"
                                                 onClick={() =>
-                                                    setExpandedGuestName((prev) =>
-                                                        prev === guest.name ? null : guest.name,
+                                                    setExpandedGuestName(
+                                                        (prev) =>
+                                                            prev === guest.name
+                                                                ? null
+                                                                : guest.name,
                                                     )
                                                 }
                                                 className="btn-secondary px-3 py-1.5 text-xs"
                                             >
-                                                {expandedGuestName === guest.name
+                                                {expandedGuestName ===
+                                                guest.name
                                                     ? "Hide Collection"
                                                     : "View Collection"}
                                             </button>
@@ -421,26 +510,41 @@ export function EventManagementPage() {
                     {managedEvent.guests.length === 0 ? (
                         <div className="card mt-4 p-8 text-center">
                             <p className="text-3xl">👥</p>
-                            <p className="mt-2 text-base font-medium">No guest activity yet</p>
-                            <p className="mt-1 text-sm muted">Guests will appear here after opening your shared link.</p>
+                            <p className="mt-2 text-base font-medium">
+                                No guest activity yet
+                            </p>
+                            <p className="mt-1 text-sm muted">
+                                Guests will appear here after opening your
+                                shared link.
+                            </p>
                         </div>
                     ) : null}
 
                     {expandedGuestName ? (
                         <div className="card mt-4 p-4">
                             <div className="flex flex-wrap items-center justify-between gap-2">
-                                <h3 className="font-semibold">My Photos: {expandedGuestName}</h3>
+                                <h3 className="font-semibold">
+                                    My Photos: {expandedGuestName}
+                                </h3>
                                 <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                                     <button
                                         type="button"
-                                        onClick={() => addRandomPhotoToGuest(expandedGuestName)}
+                                        onClick={() =>
+                                            addRandomPhotoToGuest(
+                                                expandedGuestName,
+                                            )
+                                        }
                                         className="btn-secondary px-3 py-2 text-sm"
                                     >
                                         Add Random Photo
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => removeSelectedFromGuest(expandedGuestName)}
+                                        onClick={() =>
+                                            removeSelectedFromGuest(
+                                                expandedGuestName,
+                                            )
+                                        }
                                         className="btn-primary px-3 py-2 text-sm"
                                     >
                                         Remove Selected
@@ -449,27 +553,43 @@ export function EventManagementPage() {
                             </div>
 
                             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                                {(eventItem.guests
-                                    .find((guest) => guest.name === expandedGuestName)
-                                    ?.collectionPhotoIds ?? []
+                                {(
+                                    eventItem.guests.find(
+                                        (guest) =>
+                                            guest.name === expandedGuestName,
+                                    )?.collectionPhotoIds ?? []
                                 ).map((photoId) => {
-                                    const photo = managedEvent.photos.find((p) => p.id === photoId);
+                                    const photo = managedEvent.photos.find(
+                                        (p) => p.id === photoId,
+                                    );
                                     if (!photo) {
                                         return null;
                                     }
                                     const selected = (
-                                        guestPhotoSelections[expandedGuestName] ?? []
+                                        guestPhotoSelections[
+                                            expandedGuestName
+                                        ] ?? []
                                     ).includes(photoId);
 
                                     return (
-                                        <label key={photoId} className="photo-tile block p-2 text-xs">
-                                            <img src={photo.url} alt="Guest collection" className="rounded-md" />
+                                        <label
+                                            key={photoId}
+                                            className="photo-tile block p-2 text-xs"
+                                        >
+                                            <img
+                                                src={photo.url}
+                                                alt="Guest collection"
+                                                className="rounded-md"
+                                            />
                                             <span className="mt-2 flex items-center gap-2 text-[#b8c6e4]">
                                                 <input
                                                     type="checkbox"
                                                     checked={selected}
                                                     onChange={() =>
-                                                        toggleGuestPhotoSelection(expandedGuestName, photoId)
+                                                        toggleGuestPhotoSelection(
+                                                            expandedGuestName,
+                                                            photoId,
+                                                        )
                                                     }
                                                     className="h-4 w-4 rounded border-[#5b6f98] bg-[#0f1625] accent-[#4f7cff]"
                                                 />
@@ -498,13 +618,18 @@ export function EventManagementPage() {
                             <input
                                 type="radio"
                                 checked={managedEvent.accessLevel === 1}
-                                onChange={() => setEventAccessLevel(managedEvent.id, 1)}
+                                onChange={() =>
+                                    setEventAccessLevel(managedEvent.id, 1)
+                                }
                                 className="h-4 w-4 rounded border-[#5b6f98] bg-[#0f1625] accent-[#4f7cff]"
                             />
                             <span className="ml-2 block">
-                                <strong className="text-[#e9f0ff]">Level 1 - Spot Only</strong>
+                                <strong className="text-[#e9f0ff]">
+                                    Level 1 - Spot Only
+                                </strong>
                                 <span className="mt-1 block text-sm text-[#b8c6e4]">
-                                    Guests cannot browse all photos, can only upload face and find their own
+                                    Guests cannot browse all photos, can only
+                                    upload face and find their own
                                 </span>
                             </span>
                         </label>
@@ -518,13 +643,18 @@ export function EventManagementPage() {
                             <input
                                 type="radio"
                                 checked={managedEvent.accessLevel === 2}
-                                onChange={() => setEventAccessLevel(managedEvent.id, 2)}
+                                onChange={() =>
+                                    setEventAccessLevel(managedEvent.id, 2)
+                                }
                                 className="h-4 w-4 rounded border-[#5b6f98] bg-[#0f1625] accent-[#4f7cff]"
                             />
                             <span className="ml-2 block">
-                                <strong className="text-[#e9f0ff]">Level 2 - Browse and Spot</strong>
+                                <strong className="text-[#e9f0ff]">
+                                    Level 2 - Browse and Spot
+                                </strong>
                                 <span className="mt-1 block text-sm text-[#b8c6e4]">
-                                    Guests can see all photos and also use face spotting
+                                    Guests can see all photos and also use face
+                                    spotting
                                 </span>
                             </span>
                         </label>
@@ -568,7 +698,9 @@ export function EventManagementPage() {
                             Event Name
                             <input
                                 value={settingsName}
-                                onChange={(e) => setSettingsName(e.target.value)}
+                                onChange={(e) =>
+                                    setSettingsName(e.target.value)
+                                }
                                 className="ui-input"
                             />
                         </label>
@@ -577,18 +709,29 @@ export function EventManagementPage() {
                             <input
                                 type="date"
                                 value={settingsExpiry}
-                                onChange={(e) => setSettingsExpiry(e.target.value)}
+                                onChange={(e) =>
+                                    setSettingsExpiry(e.target.value)
+                                }
                                 className="ui-input"
                             />
                         </label>
-                        <button type="button" onClick={saveSettings} className="btn-primary w-full px-4 py-2 text-sm sm:w-auto">
+                        <button
+                            type="button"
+                            onClick={saveSettings}
+                            className="btn-primary w-full px-4 py-2 text-sm sm:w-auto"
+                        >
                             Save Settings
                         </button>
                     </div>
 
                     <div className="mt-8 rounded-lg border border-red-500/60 bg-red-600/10 p-4">
-                        <h3 className="font-medium text-red-300">Danger Zone</h3>
-                        <p className="mt-1 text-sm text-red-200/80">Deleting an event will remove all uploaded photos and guest collections.</p>
+                        <h3 className="font-medium text-red-300">
+                            Danger Zone
+                        </h3>
+                        <p className="mt-1 text-sm text-red-200/80">
+                            Deleting an event will remove all uploaded photos
+                            and guest collections.
+                        </p>
                         <button
                             type="button"
                             onClick={handleDeleteEvent}

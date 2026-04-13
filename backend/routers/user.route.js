@@ -9,7 +9,7 @@ import {
     verifyEmail,
     currentUserProfile,
     sendResetCode,
-    resetPassword
+    resetPassword,
 } from "../controllers/user.controller.js";
 
 const userRouter = Router();
@@ -18,7 +18,7 @@ userRouter.route("/send-verification-code").post(sendVerificationCode);
 userRouter.route("/verify-email").post(verifyEmail);
 userRouter.route("/register").post(userRegister);
 userRouter.route("/logout").get(verifyStrictJWT, userLogOut);
-userRouter.route("/login").post(userLogIn); 
+userRouter.route("/login").post(userLogIn);
 userRouter.route("/logout").get(verifyStrictJWT, userLogOut);
 userRouter.route("/refresh-auth-tokens").patch(refreshAuthTokens);
 userRouter.route("/current").get(verifyStrictJWT, currentUserProfile);

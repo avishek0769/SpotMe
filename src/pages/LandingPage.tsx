@@ -14,19 +14,29 @@ export function LandingPage() {
                     Find people in event photos in seconds.
                 </p>
                 <p className="mt-4 max-w-3xl text-sm leading-6 text-[#9aa8c3] sm:text-base">
-                    SpotMe helps photographers manage events, upload photo sets, and share guest access.
-                    Guests can quickly find their own photos by uploading a selfie and viewing their My
-                    Photos collection.
+                    SpotMe helps photographers manage events, upload photo sets,
+                    and share guest access. Guests can quickly find their own
+                    photos by uploading a selfie and viewing their My Photos
+                    collection.
                 </p>
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                    <Link to="/dashboard" className="btn-primary px-5 py-3 text-center text-sm">
+                    <Link
+                        to="/dashboard"
+                        className="btn-primary px-5 py-3 text-center text-sm"
+                    >
                         Go to Dashboard
                     </Link>
-                    <Link to="/signup" className="btn-primary px-5 py-3 text-center text-sm">
+                    <Link
+                        to="/signup"
+                        className="btn-primary px-5 py-3 text-center text-sm"
+                    >
                         Sign Up
                     </Link>
-                    <Link to="/login" className="btn-secondary px-5 py-3 text-center text-sm">
+                    <Link
+                        to="/login"
+                        className="btn-secondary px-5 py-3 text-center text-sm"
+                    >
                         Log In
                     </Link>
                 </div>

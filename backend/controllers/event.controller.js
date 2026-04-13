@@ -6,7 +6,11 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import mongoose from "mongoose";
 import { Queue } from "bullmq";
-import { S3Client, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
+import {
+    S3Client,
+    ListObjectsV2Command,
+    DeleteObjectsCommand,
+} from "@aws-sdk/client-s3";
 import qdrant from "../utils/qdrant.js";
 
 const s3 = new S3Client({
@@ -28,7 +32,7 @@ const createEvent = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid access level");
     }
 
-    const eventId = new mongoose.Types.ObjectId()
+    const eventId = new mongoose.Types.ObjectId();
     const event = await Event.create({
         _id: eventId,
         name,
@@ -37,16 +41,26 @@ const createEvent = asyncHandler(async (req, res) => {
         coverImage: null,
         accessLevel,
         sharableLink: `${process.env.BASE_URL}/event/${eventId}`,
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
     });
 
-    return res.status(201).json(new ApiResponse(201, event, "Event created successfully"));
+    return res
+        .status(201)
+        .json(new ApiResponse(201, event, "Event created successfully"));
 });
 
 const getAllEvents = asyncHandler(async (req, res) => {
-    const events = await Event.find({ userId: req.user._id })
-    return res.status(200).json(new ApiResponse(200, events, "Successfully fetched all events for this user"))
-})
+    const events = await Event.find({ userId: req.user._id });
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                events,
+                "Successfully fetched all events for this user",
+            ),
+        );
+});
 
 const editEvent = asyncHandler(async (req, res) => {
     const { eventId } = req.params;
@@ -63,9 +77,13 @@ const editEvent = asyncHandler(async (req, res) => {
     }
     if (photoId) updateData.coverImage = photoId;
 
-    const event = await Event.findByIdAndUpdate(eventId, updateData, { new: true });
+    const event = await Event.findByIdAndUpdate(eventId, updateData, {
+        new: true,
+    });
 
-    return res.status(200).json(new ApiResponse(200, event, "Event updated successfully"));
+    return res
+        .status(200)
+        .json(new ApiResponse(200, event, "Event updated successfully"));
 });
 
 const deleteEvent = asyncHandler(async (req, res) => {
@@ -76,7 +94,7 @@ const deleteEvent = asyncHandler(async (req, res) => {
         const listCommand = new ListObjectsV2Command({
             Bucket: process.env.AWS_S3_BUCKET_NAME,
             Prefix: `event_images/${eventId}/`,
-            ContinuationToken: continuationToken
+            ContinuationToken: continuationToken,
         });
         const listResponse = await s3.send(listCommand);
 
@@ -84,9 +102,11 @@ const deleteEvent = asyncHandler(async (req, res) => {
             const deleteCommand = new DeleteObjectsCommand({
                 Bucket: process.env.AWS_S3_BUCKET_NAME,
                 Delete: {
-                    Objects: listResponse.Contents.map(obj => ({ Key: obj.Key })),
-                    Quiet: true
-                }
+                    Objects: listResponse.Contents.map((obj) => ({
+                        Key: obj.Key,
+                    })),
+                    Quiet: true,
+                },
             });
             continuationToken = listResponse.NextContinuationToken;
             await s3.send(deleteCommand);
@@ -97,37 +117,45 @@ const deleteEvent = asyncHandler(async (req, res) => {
         Event.findByIdAndDelete(eventId),
         Photo.deleteMany({ eventId }),
         Guest.deleteMany({ eventId }),
-        qdrant.deleteCollection(`Event_${eventId}`).catch(() => {}) 
+        qdrant.deleteCollection(`Event_${eventId}`).catch(() => {}),
     ]);
 
-    return res.status(200).json(new ApiResponse(
-        200,
-        null,
-        "Event and associated photos and guests deleted successfully"
-    ));
-})
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                null,
+                "Event and associated photos and guests deleted successfully",
+            ),
+        );
+});
 
 const enqueueBatch = asyncHandler(async (req, res) => {
     const { urls } = req.body;
     const { eventId } = req.params;
 
     const photos = await Photo.insertMany(
-        urls.map(url => ({
+        urls.map((url) => ({
             url,
             eventId,
-            type: "event"
+            type: "event",
         })),
-        { ordered: false }
-    )
+        { ordered: false },
+    );
 
     await imageQueue.add("processImages", { photos, eventId });
 
-    return res.status(200).json(new ApiResponse(
-        200,
-        null,
-        "Batch processing enqueued successfully"
-    ));
-})
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                null,
+                "Batch processing enqueued successfully",
+            ),
+        );
+});
 
 const getDetails = asyncHandler(async (req, res) => {
     const { eventId } = req.params;
@@ -135,12 +163,12 @@ const getDetails = asyncHandler(async (req, res) => {
     if (!event) {
         throw new ApiError(404, "Event not found");
     }
-    return res.status(200).json(new ApiResponse(
-        200,
-        event,
-        "Event details fetched successfully")
-    );
-})
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, event, "Event details fetched successfully"),
+        );
+});
 
 const getAllPhotos = asyncHandler(async (req, res) => {
     const { eventId } = req.params;
@@ -148,28 +176,24 @@ const getAllPhotos = asyncHandler(async (req, res) => {
 
     const photos = await Photo.find({
         eventId,
-        type: "event"
+        type: "event",
     })
         .skip(parseInt(page) * parseInt(limit))
         .limit(parseInt(limit));
 
-    return res.status(200).json(new ApiResponse(
-        200,
-        photos,
-        "Photos fetched successfully"
-    ));
-})
+    return res
+        .status(200)
+        .json(new ApiResponse(200, photos, "Photos fetched successfully"));
+});
 
 const getAllGuests = asyncHandler(async (req, res) => {
     const { eventId } = req.params;
     const guests = await Guest.find({ eventId });
 
-    return res.status(200).json(new ApiResponse(
-        200,
-        guests,
-        "Guests fetched successfully"
-    ));
-})
+    return res
+        .status(200)
+        .json(new ApiResponse(200, guests, "Guests fetched successfully"));
+});
 
 export {
     createEvent,
@@ -179,5 +203,5 @@ export {
     enqueueBatch,
     getDetails,
     getAllPhotos,
-    getAllGuests
+    getAllGuests,
 };

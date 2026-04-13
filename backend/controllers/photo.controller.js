@@ -6,18 +6,23 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { S3Client, GetObjectCommand, DeleteObjectsCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+    S3Client,
+    GetObjectCommand,
+    DeleteObjectsCommand,
+    PutObjectCommand,
+} from "@aws-sdk/client-s3";
 import archiver from "archiver";
 import qdrant from "../utils/qdrant.js";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import mongoose, { Schema } from "mongoose";
 
 const s3 = new S3Client({
     region: process.env.AWS_REGION,
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-    }
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
 });
 
 const getSignedUrlForEvent = asyncHandler(async (req, res) => {
@@ -30,14 +35,18 @@ const getSignedUrlForEvent = asyncHandler(async (req, res) => {
             ["starts-with", "$key", `event_images/${eventId}/`],
             ["content-length-range", 0, 20 * 1024 * 1024],
         ],
-        Expires: 3600 * 2
+        Expires: 3600 * 2,
     });
 
-    return res.status(200).json(new ApiResponse(
-        200,
-        { url, fields },
-        "Signed URL generated successfully"
-    ));
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                { url, fields },
+                "Signed URL generated successfully",
+            ),
+        );
 });
 
 const getSignedUrlForSelfie = asyncHandler(async (req, res) => {
@@ -45,13 +54,22 @@ const getSignedUrlForSelfie = asyncHandler(async (req, res) => {
 
     fileCount = parseInt(fileCount);
     if (!fileCount || fileCount < 1 || fileCount > 3) {
-        throw new ApiError(400, "Invalid file count. Please specify a number between 1 and 3.");
+        throw new ApiError(
+            400,
+            "Invalid file count. Please specify a number between 1 and 3.",
+        );
     }
 
-    const collection = await Collection.findOne({ userId: req.user._id, eventId });
+    const collection = await Collection.findOne({
+        userId: req.user._id,
+        eventId,
+    });
 
     if (collection.selfies.length + fileCount > 3) {
-        throw new ApiError(400, `Selfie upload limit exceeded. You can upload a maximum of 3 selfies. You have already uploaded ${collection.selfies.length} selfie(s).`);
+        throw new ApiError(
+            400,
+            `Selfie upload limit exceeded. You can upload a maximum of 3 selfies. You have already uploaded ${collection.selfies.length} selfie(s).`,
+        );
     }
 
     const urlPromises = Array.from({ length: fileCount }, () => {
@@ -65,11 +83,15 @@ const getSignedUrlForSelfie = asyncHandler(async (req, res) => {
 
     const signedUrls = await Promise.all(urlPromises);
 
-    return res.status(200).json(new ApiResponse(
-        200,
-        { urls: signedUrls },
-        "Signed URLs generated successfully"
-    ));
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                { urls: signedUrls },
+                "Signed URLs generated successfully",
+            ),
+        );
 });
 
 const createSelfie = asyncHandler(async (req, res) => {
@@ -77,29 +99,35 @@ const createSelfie = asyncHandler(async (req, res) => {
     const { urls } = req.body;
 
     if (urls.length > 3) {
-        throw new ApiError(400, "You can upload a maximum of 3 selfies at a time.");
+        throw new ApiError(
+            400,
+            "You can upload a maximum of 3 selfies at a time.",
+        );
     }
 
     let collection = await Collection.findOne({
         eventId,
-        userId: req.user._id
+        userId: req.user._id,
     });
     if (collection?.selfies?.length >= 3) {
-        throw new ApiError(400, `Selfie upload limit exceeded. You can upload a maximum of 3 selfies. You have already uploaded ${collection.selfies.length} selfie(s).`);
+        throw new ApiError(
+            400,
+            `Selfie upload limit exceeded. You can upload a maximum of 3 selfies. You have already uploaded ${collection.selfies.length} selfie(s).`,
+        );
     }
     if (!collection) {
         collection = await Collection.create({
             eventId,
-            userId: req.user._id
+            userId: req.user._id,
         });
     }
 
     const createdPhotos = await Photo.insertMany(
-        urls.map(url => ({
+        urls.map((url) => ({
             url,
             eventId,
-            type: "selfie"
-        }))
+            type: "selfie",
+        })),
     );
 
     collection = await Collection.findByIdAndUpdate(
@@ -107,33 +135,37 @@ const createSelfie = asyncHandler(async (req, res) => {
         {
             $addToSet: {
                 selfies: {
-                    $each: createdPhotos.map(photo => photo._id)
-                }
-            }
+                    $each: createdPhotos.map((photo) => photo._id),
+                },
+            },
         },
-        { new: true }
+        { new: true },
     );
 
-    return res.status(201).json(new ApiResponse(
-        201,
-        { photos: createdPhotos, collection },
-        "Selfies added to collection successfully"
-    ));
-})
+    return res
+        .status(201)
+        .json(
+            new ApiResponse(
+                201,
+                { photos: createdPhotos, collection },
+                "Selfies added to collection successfully",
+            ),
+        );
+});
 
 const downloadSelected = asyncHandler(async (req, res) => {
     const { fileNames } = req.body;
     const { eventId } = req.params;
-    const archive = archiver("zip", { zlib: { level: 5 } })
+    const archive = archiver("zip", { zlib: { level: 5 } });
 
     res.attachment("selected_images.zip");
-    archive.pipe(res)
+    archive.pipe(res);
 
     for (const fileName of fileNames) {
         const command = new GetObjectCommand({
             Bucket: process.env.AWS_S3_BUCKET_NAME,
-            Key: `event_images/${eventId}/${fileName}`
-        })
+            Key: `event_images/${eventId}/${fileName}`,
+        });
         const { Body } = await s3.send(command);
         archive.append(Body, { name: fileName });
     }
@@ -154,39 +186,41 @@ const downloadAll = asyncHandler(async (req, res) => {
                     from: "photos",
                     localField: "myPhotos",
                     foreignField: "_id",
-                    as: "photoDetails"
-                }
+                    as: "photoDetails",
+                },
             },
             { $unwind: "$photoDetails" },
-            { $replaceRoot: { newRoot: "$photoDetails" } }
+            { $replaceRoot: { newRoot: "$photoDetails" } },
         ]);
-    }
-    else {
+    } else {
         allPhotos = await Photo.find({ eventId });
     }
 
     if (allPhotos.length === 0) {
-        throw new ApiError(404, "No photos found for the given event/collection");
+        throw new ApiError(
+            404,
+            "No photos found for the given event/collection",
+        );
     }
 
-    const allFileKeys = allPhotos.map(photo => photo.url.split("/").pop())
+    const allFileKeys = allPhotos.map((photo) => photo.url.split("/").pop());
 
-    const archive = archiver("zip", { zlib: { level: 5 } })
+    const archive = archiver("zip", { zlib: { level: 5 } });
 
     res.attachment("all_images.zip");
-    archive.pipe(res)
+    archive.pipe(res);
 
     for (const fileName of allFileKeys) {
         const command = new GetObjectCommand({
             Bucket: process.env.AWS_S3_BUCKET_NAME,
-            Key: `event_images/${eventId}/${fileName}`
-        })
+            Key: `event_images/${eventId}/${fileName}`,
+        });
         const { Body } = await s3.send(command);
         archive.append(Body, { name: fileName });
     }
 
     archive.finalize();
-})
+});
 
 const deletePhoto = asyncHandler(async (req, res) => {
     const { eventId } = req.params;
@@ -194,14 +228,19 @@ const deletePhoto = asyncHandler(async (req, res) => {
 
     const event = await Event.findById(eventId);
     if (event?.userId.toString() !== req.user._id.toString()) {
-        throw new ApiError(404, "User not authorized to delete photos of this event");
+        throw new ApiError(
+            404,
+            "User not authorized to delete photos of this event",
+        );
     }
 
     if (fileNames?.length > 0) {
         const deleteParams = {
             Bucket: process.env.AWS_S3_BUCKET_NAME,
             Delete: {
-                Objects: fileNames.map(name => ({ Key: `event_images/${eventId}/${name}` })),
+                Objects: fileNames.map((name) => ({
+                    Key: `event_images/${eventId}/${name}`,
+                })),
                 Quiet: true,
             },
         };
@@ -211,26 +250,32 @@ const deletePhoto = asyncHandler(async (req, res) => {
     const deleted = await Photo.deleteMany({ _id: { $in: photoIds } });
     await Collection.updateMany(
         { eventId, myPhotos: { $in: photoIds } },
-        { $pull: { myPhotos: { $in: photoIds } } }
+        { $pull: { myPhotos: { $in: photoIds } } },
     );
     await qdrant.delete(`Event_${eventId}`, {
         wait: true,
         filter: {
-            must: [{
-                key: "photoId",
-                match: {
-                    any: photoIds
-                }
-            }]
-        }
+            must: [
+                {
+                    key: "photoId",
+                    match: {
+                        any: photoIds,
+                    },
+                },
+            ],
+        },
     });
 
-    return res.status(200).json(new ApiResponse(
-        200,
-        { deletedCount: deleted.deletedCount },
-        "All photos deleted successfully"
-    ));
-})
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                { deletedCount: deleted.deletedCount },
+                "All photos deleted successfully",
+            ),
+        );
+});
 
 const deleteSelfie = asyncHandler(async (req, res) => {
     const { collectionId } = req.params;
@@ -238,13 +283,16 @@ const deleteSelfie = asyncHandler(async (req, res) => {
     const collection = await Collection.findById(collectionId);
 
     if (collection?.userId.toString() !== req.user._id.toString()) {
-        throw new ApiError(404, "User not authorized to delete selfies of this collection");
+        throw new ApiError(
+            404,
+            "User not authorized to delete selfies of this collection",
+        );
     }
 
     const deleteParams = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
         Delete: {
-            Objects: fileNames.map(name => ({ Key: `selfies/${name}` })),
+            Objects: fileNames.map((name) => ({ Key: `selfies/${name}` })),
             Quiet: true,
         },
     };
@@ -254,15 +302,19 @@ const deleteSelfie = asyncHandler(async (req, res) => {
     await Collection.findByIdAndUpdate(collectionId, {
         $pull: {
             selfies: { $in: photoIds },
-        }
+        },
     });
 
-    return res.status(200).json(new ApiResponse(
-        200,
-        { deletedCount: deleted.deletedCount },
-        "All selfies deleted successfully"
-    ));
-})
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                { deletedCount: deleted.deletedCount },
+                "All selfies deleted successfully",
+            ),
+        );
+});
 
 export {
     getSignedUrlForEvent,
@@ -271,5 +323,5 @@ export {
     downloadAll,
     deletePhoto,
     deleteSelfie,
-    createSelfie
-}
+    createSelfie,
+};

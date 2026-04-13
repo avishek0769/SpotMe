@@ -29,7 +29,9 @@ export function Pagination({
                 </button>
                 <button
                     type="button"
-                    onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+                    onClick={() =>
+                        onPageChange(Math.min(totalPages, currentPage + 1))
+                    }
                     disabled={currentPage === totalPages}
                     className="btn-primary flex-1 px-3 py-2 disabled:opacity-50 sm:flex-none"
                 >

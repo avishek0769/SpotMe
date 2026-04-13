@@ -11,7 +11,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     const location = useLocation();
 
     if (!currentUser) {
-        return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+        return (
+            <Navigate to="/login" state={{ from: location.pathname }} replace />
+        );
     }
 
     return children;

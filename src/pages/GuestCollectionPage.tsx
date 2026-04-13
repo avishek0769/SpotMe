@@ -42,10 +42,15 @@ export function GuestCollectionPage() {
     );
 
     const myPhotos = (guestRecord?.collectionPhotoIds ?? [])
-        .map((photoId) => collectionEvent.photos.find((photo) => photo.id === photoId))
+        .map((photoId) =>
+            collectionEvent.photos.find((photo) => photo.id === photoId),
+        )
         .filter((photo): photo is NonNullable<typeof photo> => Boolean(photo));
 
-    const pagedMyPhotos = myPhotos.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const pagedMyPhotos = myPhotos.slice(
+        (page - 1) * PAGE_SIZE,
+        page * PAGE_SIZE,
+    );
     const pagedAllEventPhotos = collectionEvent.photos.slice(
         (allPhotosPage - 1) * PAGE_SIZE,
         allPhotosPage * PAGE_SIZE,
@@ -67,17 +72,26 @@ export function GuestCollectionPage() {
 
         window.setTimeout(() => {
             const existingIds = guestRecord?.collectionPhotoIds ?? [];
-            const pool = collectionEvent.photos.filter((photo) => !existingIds.includes(photo.id));
+            const pool = collectionEvent.photos.filter(
+                (photo) => !existingIds.includes(photo.id),
+            );
 
-            const matchingUploads = Array.from({ length: selectedSelfieCount }, (_, index) => {
-                const seed = Date.now() + index;
-                return {
-                    id: seed,
-                    url: `https://picsum.photos/seed/upload-${seed}/400/300`,
-                    uploadedAt: new Date().toISOString(),
-                };
-            });
-            setGuestMatchingUploads(collectionEvent.id, guestName, matchingUploads);
+            const matchingUploads = Array.from(
+                { length: selectedSelfieCount },
+                (_, index) => {
+                    const seed = Date.now() + index;
+                    return {
+                        id: seed,
+                        url: `https://picsum.photos/seed/upload-${seed}/400/300`,
+                        uploadedAt: new Date().toISOString(),
+                    };
+                },
+            );
+            setGuestMatchingUploads(
+                collectionEvent.id,
+                guestName,
+                matchingUploads,
+            );
 
             if (existingIds.length > 0) {
                 const newPhotos = pool.slice(0, 3);
@@ -87,9 +101,13 @@ export function GuestCollectionPage() {
                     newPhotos.map((photo) => photo.id),
                     { merge: true, updateSearchedAt: true },
                 );
-                setMessage(`${newPhotos.length} new photos added to your collection`);
+                setMessage(
+                    `${newPhotos.length} new photos added to your collection`,
+                );
             } else {
-                const firstSet = collectionEvent.photos.slice(0, 12).map((photo) => photo.id);
+                const firstSet = collectionEvent.photos
+                    .slice(0, 12)
+                    .map((photo) => photo.id);
                 upsertGuestCollection(collectionEvent.id, guestName, firstSet, {
                     merge: false,
                     updateSearchedAt: true,
@@ -107,7 +125,9 @@ export function GuestCollectionPage() {
 
     function togglePhoto(photoId: number) {
         setSelectedPhotoIds((prev) =>
-            prev.includes(photoId) ? prev.filter((idNum) => idNum !== photoId) : [...prev, photoId],
+            prev.includes(photoId)
+                ? prev.filter((idNum) => idNum !== photoId)
+                : [...prev, photoId],
         );
     }
 
@@ -115,7 +135,11 @@ export function GuestCollectionPage() {
         if (!selectedPhotoIds.length) {
             return;
         }
-        removeGuestCollectionPhotos(collectionEvent.id, guestName, selectedPhotoIds);
+        removeGuestCollectionPhotos(
+            collectionEvent.id,
+            guestName,
+            selectedPhotoIds,
+        );
         setSelectedPhotoIds([]);
     }
 
@@ -123,7 +147,9 @@ export function GuestCollectionPage() {
         <div className="page-wrap">
             <div className="flex items-center justify-between gap-3">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">My Collection</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">
+                        My Collection
+                    </h1>
                     <p className="mt-1 text-sm muted">{collectionEvent.name}</p>
                     <div className="mt-2 inline-flex">
                         <span
@@ -133,11 +159,16 @@ export function GuestCollectionPage() {
                                     : "status-uploading"
                             }`}
                         >
-                            {collectionEvent.accessLevel === 2 ? "Browse and Spot" : "Spot Only"}
+                            {collectionEvent.accessLevel === 2
+                                ? "Browse and Spot"
+                                : "Spot Only"}
                         </span>
                     </div>
                 </div>
-                <Link to="/dashboard" className="btn-secondary px-4 py-2 text-sm">
+                <Link
+                    to="/dashboard"
+                    className="btn-secondary px-4 py-2 text-sm"
+                >
                     Back to Dashboard
                 </Link>
             </div>
@@ -170,9 +201,12 @@ export function GuestCollectionPage() {
             {activeTab === "find" ? (
                 <>
                     <section className="card mt-5 p-5">
-                        <h2 className="text-lg font-semibold">Upload Selfie and Find</h2>
+                        <h2 className="text-lg font-semibold">
+                            Upload Selfie and Find
+                        </h2>
                         <p className="mt-1 text-sm muted">
-                            Signed in as {guestName}. Select up to 3 selfies and run matching.
+                            Signed in as {guestName}. Select up to 3 selfies and
+                            run matching.
                         </p>
 
                         <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
@@ -197,7 +231,9 @@ export function GuestCollectionPage() {
                             </button>
                         </div>
 
-                        <p className="mt-2 text-sm muted">Selected selfies: {selectedSelfieCount}</p>
+                        <p className="mt-2 text-sm muted">
+                            Selected selfies: {selectedSelfieCount}
+                        </p>
                         {message ? (
                             <div className="mt-3 rounded-lg border border-[#2d4164] bg-[#13213a] px-3 py-2 text-sm text-[#d4e2ff]">
                                 {message}
@@ -207,17 +243,27 @@ export function GuestCollectionPage() {
 
                     <section className="card mt-5 p-5">
                         <h2 className="text-lg font-semibold">My Photos</h2>
-                        <p className="mt-1 text-sm muted">Photos matched for {guestName}</p>
+                        <p className="mt-1 text-sm muted">
+                            Photos matched for {guestName}
+                        </p>
 
                         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                             {pagedMyPhotos.map((photo) => (
                                 <div key={photo.id} className="photo-tile p-2">
-                                    <img src={photo.url} alt="My photo" className="rounded-md" />
+                                    <img
+                                        src={photo.url}
+                                        alt="My photo"
+                                        className="rounded-md"
+                                    />
                                     <label className="mt-2 flex items-center gap-2 text-xs text-[#b8c6e4]">
                                         <input
                                             type="checkbox"
-                                            checked={selectedPhotoIds.includes(photo.id)}
-                                            onChange={() => togglePhoto(photo.id)}
+                                            checked={selectedPhotoIds.includes(
+                                                photo.id,
+                                            )}
+                                            onChange={() =>
+                                                togglePhoto(photo.id)
+                                            }
                                         />
                                         #{photo.id}
                                     </label>
@@ -228,7 +274,11 @@ export function GuestCollectionPage() {
                         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                             <button
                                 type="button"
-                                onClick={() => window.alert(`Downloading ${myPhotos.length} photos`)}
+                                onClick={() =>
+                                    window.alert(
+                                        `Downloading ${myPhotos.length} photos`,
+                                    )
+                                }
                                 className="btn-primary px-4 py-2 text-sm"
                             >
                                 Download All
@@ -245,8 +295,12 @@ export function GuestCollectionPage() {
                         {myPhotos.length === 0 ? (
                             <div className="card mt-4 p-8 text-center">
                                 <p className="text-3xl">🔎</p>
-                                <p className="mt-2 text-base font-medium">No matched photos yet</p>
-                                <p className="mt-1 text-sm muted">Use Upload & Find above on this same page.</p>
+                                <p className="mt-2 text-base font-medium">
+                                    No matched photos yet
+                                </p>
+                                <p className="mt-1 text-sm muted">
+                                    Use Upload & Find above on this same page.
+                                </p>
                             </div>
                         ) : null}
 
@@ -259,25 +313,47 @@ export function GuestCollectionPage() {
                     </section>
 
                     <section className="card mt-5 p-5">
-                        <h2 className="text-lg font-semibold">Selfies Uploaded For Matching</h2>
-                        <p className="mt-1 text-sm muted">Latest 1-3 uploads used for the most recent matching run</p>
+                        <h2 className="text-lg font-semibold">
+                            Selfies Uploaded For Matching
+                        </h2>
+                        <p className="mt-1 text-sm muted">
+                            Latest 1-3 uploads used for the most recent matching
+                            run
+                        </p>
 
                         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                            {(guestRecord?.matchingUploads ?? []).map((upload) => (
-                                <div key={upload.id} className="photo-tile p-2">
-                                    <img src={upload.url} alt="Uploaded for matching" className="rounded-md" />
-                                    <p className="mt-2 text-xs text-[#b8c6e4]">
-                                        Uploaded {new Date(upload.uploadedAt).toLocaleString()}
-                                    </p>
-                                </div>
-                            ))}
+                            {(guestRecord?.matchingUploads ?? []).map(
+                                (upload) => (
+                                    <div
+                                        key={upload.id}
+                                        className="photo-tile p-2"
+                                    >
+                                        <img
+                                            src={upload.url}
+                                            alt="Uploaded for matching"
+                                            className="rounded-md"
+                                        />
+                                        <p className="mt-2 text-xs text-[#b8c6e4]">
+                                            Uploaded{" "}
+                                            {new Date(
+                                                upload.uploadedAt,
+                                            ).toLocaleString()}
+                                        </p>
+                                    </div>
+                                ),
+                            )}
                         </div>
 
                         {(guestRecord?.matchingUploads.length ?? 0) === 0 ? (
                             <div className="card mt-4 p-8 text-center">
                                 <p className="text-3xl">📸</p>
-                                <p className="mt-2 text-base font-medium">No selfie uploads yet</p>
-                                <p className="mt-1 text-sm muted">Upload a selfie from the event guest page to start matching.</p>
+                                <p className="mt-2 text-base font-medium">
+                                    No selfie uploads yet
+                                </p>
+                                <p className="mt-1 text-sm muted">
+                                    Upload a selfie from the event guest page to
+                                    start matching.
+                                </p>
                             </div>
                         ) : null}
                     </section>
@@ -287,14 +363,25 @@ export function GuestCollectionPage() {
             {activeTab === "all" ? (
                 collectionEvent.accessLevel === 2 ? (
                     <section className="card mt-5 p-5">
-                        <h2 className="text-lg font-semibold">All Event Photos</h2>
-                        <p className="mt-1 text-sm muted">You can browse the full event gallery for this event.</p>
+                        <h2 className="text-lg font-semibold">
+                            All Event Photos
+                        </h2>
+                        <p className="mt-1 text-sm muted">
+                            You can browse the full event gallery for this
+                            event.
+                        </p>
 
                         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                             {pagedAllEventPhotos.map((photo) => (
                                 <div key={photo.id} className="photo-tile p-2">
-                                    <img src={photo.url} alt="Event" className="rounded-md" />
-                                    <p className="mt-2 text-xs text-[#b8c6e4]">#{photo.id}</p>
+                                    <img
+                                        src={photo.url}
+                                        alt="Event"
+                                        className="rounded-md"
+                                    />
+                                    <p className="mt-2 text-xs text-[#b8c6e4]">
+                                        #{photo.id}
+                                    </p>
                                 </div>
                             ))}
                         </div>
@@ -308,10 +395,15 @@ export function GuestCollectionPage() {
                     </section>
                 ) : (
                     <section className="card mt-5 p-5">
-                        <h2 className="text-lg font-semibold">All Event Photos</h2>
-                        <p className="mt-1 text-sm muted">This event is shared as Spot Only.</p>
+                        <h2 className="text-lg font-semibold">
+                            All Event Photos
+                        </h2>
+                        <p className="mt-1 text-sm muted">
+                            This event is shared as Spot Only.
+                        </p>
                         <div className="mt-4 rounded-lg border border-[#2f4669] bg-[#13213a] p-3 text-sm text-[#c9d8f2]">
-                            You can only upload selfies and view your matched photos. Browsing all event photos is disabled.
+                            You can only upload selfies and view your matched
+                            photos. Browsing all event photos is disabled.
                         </div>
                     </section>
                 )

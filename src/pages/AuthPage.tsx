@@ -56,7 +56,9 @@ export function AuthPage({ mode }: AuthPageProps) {
     return (
         <div className="page-wrap flex min-h-[calc(100vh-64px)] items-center justify-center">
             <div className="card w-full max-w-md p-6 sm:p-7">
-                <p className="text-xs font-medium uppercase tracking-wide text-[#9aa8c3]">SpotMe Access</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-[#9aa8c3]">
+                    SpotMe Access
+                </p>
                 <h1 className="mt-2 text-3xl font-bold tracking-tight text-[#f5f8ff]">
                     {isSignup ? "Create your account" : "Log in"}
                 </h1>
@@ -99,14 +101,27 @@ export function AuthPage({ mode }: AuthPageProps) {
                         </p>
                     ) : null}
 
-                    <button type="submit" disabled={isLoading} className="btn-primary w-full px-4 py-2.5">
-                        {isLoading ? "Please wait..." : isSignup ? "Sign Up" : "Log In"}
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="btn-primary w-full px-4 py-2.5"
+                    >
+                        {isLoading
+                            ? "Please wait..."
+                            : isSignup
+                              ? "Sign Up"
+                              : "Log In"}
                     </button>
                 </form>
 
                 <p className="mt-5 text-sm text-[#9aa8c3]">
-                    {isSignup ? "Already have an account? " : "Need an account? "}
-                    <Link to={isSignup ? "/login" : "/signup"} className="text-[#9eb7ff] hover:text-[#bfd0ff]">
+                    {isSignup
+                        ? "Already have an account? "
+                        : "Need an account? "}
+                    <Link
+                        to={isSignup ? "/login" : "/signup"}
+                        className="text-[#9eb7ff] hover:text-[#bfd0ff]"
+                    >
                         {isSignup ? "Log In" : "Sign Up"}
                     </Link>
                 </p>

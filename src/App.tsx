@@ -1,4 +1,3 @@
-
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppProvider } from "./context/AppContext.tsx";
 import { AppShell } from "./components/AppShell.tsx";
@@ -17,7 +16,10 @@ function App() {
             <AppShell>
                 <Routes>
                     <Route path="/" element={<LandingPage />} />
-                    <Route path="/signup" element={<AuthPage mode="signup" />} />
+                    <Route
+                        path="/signup"
+                        element={<AuthPage mode="signup" />}
+                    />
                     <Route path="/login" element={<AuthPage mode="login" />} />
                     <Route
                         path="/dashboard"
@@ -35,8 +37,14 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
-                    <Route path="/events/:id/guest" element={<GuestEventPage />} />
-                    <Route path="/events/:id/guest/collection" element={<GuestCollectionPage />} />
+                    <Route
+                        path="/events/:id/guest"
+                        element={<GuestEventPage />}
+                    />
+                    <Route
+                        path="/events/:id/guest/collection"
+                        element={<GuestCollectionPage />}
+                    />
                     <Route path="*" element={<NotFoundPage />} />
                     <Route path="/home" element={<Navigate to="/" replace />} />
                 </Routes>

@@ -3,17 +3,17 @@ import mongoose, { Schema, model } from "mongoose";
 const guestSchema = new Schema({
     userId: {
         type: mongoose.Types.ObjectId,
-        ref: "users"
+        ref: "users",
     },
     eventId: {
         type: mongoose.Types.ObjectId,
         ref: "events",
-        required: true
+        required: true,
     },
     accessedAt: {
         type: Date,
-        default: Date.now
-    }
+        default: Date.now,
+    },
 });
 
 const Guest = model("Guest", guestSchema);

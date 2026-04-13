@@ -1,13 +1,27 @@
 import { Router } from "express";
 import { verifyStrictJWT, verifyJWT } from "../middlewares/auth.middleware.js";
-import { findMatch, removePhoto, addPhoto, getAllPhotos, getAllSelfies } from "../controllers/collection.controller.js";
+import {
+    findMatch,
+    removePhoto,
+    addPhoto,
+    getAllPhotos,
+    getAllSelfies,
+} from "../controllers/collection.controller.js";
 
 const collectionRouter = Router();
 
 collectionRouter.route("/find/:eventId").post(verifyJWT, findMatch);
-collectionRouter.route("/photo/remove/:collectionId").delete(verifyStrictJWT, removePhoto);
-collectionRouter.route("/photo/add/:collectionId").post(verifyStrictJWT, addPhoto);
-collectionRouter.route("/all-photos/:collectionId").get(verifyStrictJWT, getAllPhotos);
-collectionRouter.route("/all-selfies/:collectionId").get(verifyStrictJWT, getAllSelfies);
+collectionRouter
+    .route("/photo/remove/:collectionId")
+    .delete(verifyStrictJWT, removePhoto);
+collectionRouter
+    .route("/photo/add/:collectionId")
+    .post(verifyStrictJWT, addPhoto);
+collectionRouter
+    .route("/all-photos/:collectionId")
+    .get(verifyStrictJWT, getAllPhotos);
+collectionRouter
+    .route("/all-selfies/:collectionId")
+    .get(verifyStrictJWT, getAllSelfies);
 
 export default collectionRouter;
