@@ -49,7 +49,7 @@ const createEvent = asyncHandler(async (req, res) => {
         .json(new ApiResponse(201, event, "Event created successfully"));
 });
 
-const getAllEvents = asyncHandler(async (req, res) => {
+const getAllCreatedEvents = asyncHandler(async (req, res) => {
     const events = await Event.find({ userId: req.user._id });
     return res
         .status(200)
@@ -58,6 +58,22 @@ const getAllEvents = asyncHandler(async (req, res) => {
                 200,
                 events,
                 "Successfully fetched all events for this user",
+            ),
+        );
+});
+
+const getAllSharedEvents = asyncHandler(async (req, res) => {
+    const guests = await Guest.find({ userId: req.user._id });
+    const eventIds = guests.map((g) => g.eventId);
+    const events = await Event.find({ _id: { $in: eventIds } });
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                events,
+                "Successfully fetched all shared events for this user",
             ),
         );
 });
@@ -174,6 +190,13 @@ const getAllPhotos = asyncHandler(async (req, res) => {
     const { eventId } = req.params;
     const { page = 0, limit = 0 } = req.query;
 
+    const event = await Event.findById(eventId);
+    if (event.accessLevel === "spot") {
+        if(!req.user || event.userId.toString() !== req.user._id.toString()) {
+            throw new ApiError(403, "Access denied to photos of this event");
+        }
+    }
+
     const photos = await Photo.find({
         eventId,
         type: "event",
@@ -197,7 +220,8 @@ const getAllGuests = asyncHandler(async (req, res) => {
 
 export {
     createEvent,
-    getAllEvents,
+    getAllCreatedEvents,
+    getAllSharedEvents,
     deleteEvent,
     editEvent,
     enqueueBatch,
