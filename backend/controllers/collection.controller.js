@@ -237,4 +237,39 @@ const getAllSelfies = asyncHandler(async (req, res) => {
     return res.json(new ApiResponse(200, collection, "Selfies retrieved"));
 });
 
-export { findMatch, removePhoto, addPhoto, getAllPhotos, getAllSelfies };
+const getMyCollectionByEvent = asyncHandler(async (req, res) => {
+    const { eventId } = req.params;
+
+    const collection = await Collection.findOne({
+        eventId,
+        userId: req.user._id,
+    });
+
+    return res.json(new ApiResponse(200, collection, "Collection retrieved"));
+});
+
+const getGuestCollectionByEvent = asyncHandler(async (req, res) => {
+    const { eventId, userId } = req.params;
+
+    const event = await Event.findById(eventId);
+    if (!event || event.userId.toString() !== req.user._id.toString()) {
+        throw new ApiError(
+            403,
+            "Only the event owner can access guest collections",
+        );
+    }
+
+    const collection = await Collection.findOne({ eventId, userId });
+
+    return res.json(new ApiResponse(200, collection, "Collection retrieved"));
+});
+
+export {
+    findMatch,
+    removePhoto,
+    addPhoto,
+    getAllPhotos,
+    getAllSelfies,
+    getMyCollectionByEvent,
+    getGuestCollectionByEvent,
+};

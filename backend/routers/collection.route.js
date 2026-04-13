@@ -6,6 +6,8 @@ import {
     addPhoto,
     getAllPhotos,
     getAllSelfies,
+    getMyCollectionByEvent,
+    getGuestCollectionByEvent,
 } from "../controllers/collection.controller.js";
 
 const collectionRouter = Router();
@@ -23,5 +25,11 @@ collectionRouter
 collectionRouter
     .route("/all-selfies/:collectionId")
     .get(verifyStrictJWT, getAllSelfies);
+collectionRouter
+    .route("/my/:eventId")
+    .get(verifyStrictJWT, getMyCollectionByEvent);
+collectionRouter
+    .route("/event/:eventId/user/:userId")
+    .get(verifyStrictJWT, getGuestCollectionByEvent);
 
 export default collectionRouter;
