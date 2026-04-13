@@ -1,477 +1,249 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
-import type { EventType } from "../types";
+import * as api from "../api";
+import type { EventData } from "../api";
 
-function getStatusClass(status: "Uploading" | "Indexing" | "Ready") {
-    if (status === "Ready") {
-        return "status-pill status-ready";
-    }
-    if (status === "Indexing") {
-        return "status-pill status-indexing";
-    }
-    return "status-pill status-uploading";
-}
-
-function getEventCardStatus(eventItem: {
-    status: "Uploading" | "Indexing" | "Ready";
-    photos: { id: number; url: string }[];
-}) {
-    if (eventItem.photos.length === 0) {
-        return {
-            label: "No Photos",
-            className:
-                "status-pill border border-[#3a4a67] bg-[#162137] text-[#b6c5e3]",
-        };
-    }
-
-    return {
-        label: eventItem.status,
-        className: getStatusClass(eventItem.status),
+function getStatusPill(status: string) {
+    const cls: Record<string, string> = {
+        empty: "status-pill status-empty",
+        processing: "status-pill status-processing",
+        expired: "status-pill status-expired",
     };
+    return cls[status] || "status-pill status-empty";
 }
 
-function getEventCoverPhoto(eventItem: {
-    id: string;
-    photos: { id: number; url: string }[];
-}) {
-    if (eventItem.photos.length > 0) {
-        return eventItem.photos[0].url;
-    }
-
-    return `https://picsum.photos/seed/event-cover-${eventItem.id}/800/450`;
+function formatDate(d: string) {
+    return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
-const sharedDummyCards = [
-    {
-        id: "dummy-shared-1",
-        eventId: "evt-1",
-        name: "Nisha & Rohan Reception",
-        photographer: "Amit Verma",
-        photos: 186,
-        coverUrl: "https://picsum.photos/seed/dummy-cover-1/800/450",
-    },
-    {
-        id: "dummy-shared-2",
-        eventId: "evt-2",
-        name: "Startup Summit 2025",
-        photographer: "Neha Kapoor",
-        photos: 124,
-        coverUrl: "https://picsum.photos/seed/dummy-cover-2/800/450",
-    },
-];
+function EventCard({ ev, linkTo }: { ev: EventData; linkTo: string }) {
+    return (
+        <Link to={linkTo} style={{ textDecoration: "none", color: "inherit" }}>
+            <article className="card" style={{ padding: 20, height: "100%", display: "flex", flexDirection: "column" }}>
+                <div style={{
+                    height: 120, borderRadius: 12, overflow: "hidden",
+                    background: ev.coverImage
+                        ? `url(${ev.coverImage}) center/cover no-repeat`
+                        : "linear-gradient(135deg, var(--surface-elevated), var(--bg-soft))",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    border: "1px solid var(--border)",
+                }}>
+                    {!ev.coverImage && <span style={{ fontSize: 36 }}>📸</span>}
+                </div>
+                <div style={{ marginTop: 14, display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+                    <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "#fff", lineHeight: 1.3 }}>{ev.name}</h3>
+                    <span className={getStatusPill(ev.status)}>{ev.status}</span>
+                </div>
+                <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <div className="stat-card">
+                        <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)" }}>Date</p>
+                        <p style={{ marginTop: 2, fontSize: "0.8125rem", color: "#fff" }}>{formatDate(ev.eventDate)}</p>
+                    </div>
+                    <div className="stat-card">
+                        <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)" }}>Access</p>
+                        <p style={{ marginTop: 2, fontSize: "0.8125rem", color: "#fff" }}>
+                            {ev.accessLevel === "spot" ? "Spot Only" : "Browse & Spot"}
+                        </p>
+                    </div>
+                </div>
+            </article>
+        </Link>
+    );
+}
 
-const myEventDummyCard = {
-    id: "dummy-my-event-1",
-    eventId: "evt-1",
-    name: "Demo Event (Created)",
-    date: "2026-04-01",
-    type: "Other",
-    photos: 42,
-    guests: 5,
-    status: "Ready" as const,
-    coverUrl: "https://picsum.photos/seed/dummy-my-event-cover/800/450",
-};
+function SkeletonCards({ count = 3 }: { count?: number }) {
+    return (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
+            {Array.from({ length: count }, (_, i) => (
+                <div key={i} className="card" style={{ padding: 20 }}>
+                    <div className="skeleton" style={{ height: 120, borderRadius: 12 }} />
+                    <div className="skeleton" style={{ height: 18, width: "65%", marginTop: 14 }} />
+                    <div className="skeleton" style={{ height: 14, width: "40%", marginTop: 8 }} />
+                </div>
+            ))}
+        </div>
+    );
+}
 
 export function DashboardPage() {
     const navigate = useNavigate();
-    const { currentUser, getMyEvents, getSharedEvents, createEvent, logout } =
-        useAppContext();
+    const { user, logout } = useAppContext();
 
-    const myEvents = useMemo(() => getMyEvents(), [getMyEvents]);
-    const sharedEvents = useMemo(() => getSharedEvents(), [getSharedEvents]);
+    const [createdEvents, setCreatedEvents] = useState<EventData[]>([]);
+    const [sharedEvents, setSharedEvents] = useState<EventData[]>([]);
+    const [loadingCreated, setLoadingCreated] = useState(true);
+    const [loadingShared, setLoadingShared] = useState(true);
+    const [activeEventsTab, setActiveEventsTab] = useState<"my" | "shared">("my");
 
-    const [activeTab, setActiveTab] = useState<"my-events" | "shared">(
-        "my-events",
-    );
+    // Create Modal
     const [showModal, setShowModal] = useState(false);
     const [eventName, setEventName] = useState("");
     const [eventDate, setEventDate] = useState("");
-    const [eventType, setEventType] = useState<EventType>("Wedding");
-    const [isCreating, setIsCreating] = useState(false);
+    const [accessLevel, setAccessLevel] = useState<"spot" | "browse">("spot");
+    const [creating, setCreating] = useState(false);
     const [error, setError] = useState("");
 
-    async function handleCreateEvent(event: FormEvent) {
-        event.preventDefault();
-        setError("");
+    useEffect(() => {
+        api.getAllCreatedEvents()
+            .then((res) => setCreatedEvents(res.data))
+            .catch(console.error)
+            .finally(() => setLoadingCreated(false));
+        api.getAllSharedEvents()
+            .then((res) => setSharedEvents(res.data))
+            .catch(console.error)
+            .finally(() => setLoadingShared(false));
+    }, []);
 
-        if (!eventName.trim() || !eventDate.trim()) {
-            setError("Event name and date are required");
-            return;
-        }
+    async function handleCreate(e: FormEvent) {
+        e.preventDefault(); setError("");
+        if (!eventName.trim() || !eventDate) { setError("Name and date are required"); return; }
+        setCreating(true);
+        try {
+            const res = await api.createEvent({ name: eventName.trim(), eventDate, accessLevel });
+            setCreatedEvents((prev) => [res.data, ...prev]);
+            setShowModal(false); setEventName(""); setEventDate(""); setAccessLevel("spot");
+            navigate(`/events/${res.data._id}`);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed");
+        } finally { setCreating(false); }
+    }
 
-        setIsCreating(true);
-        const created = await createEvent({
-            name: eventName.trim(),
-            date: eventDate,
-            type: eventType,
-        });
-        setIsCreating(false);
-        setShowModal(false);
-        setEventName("");
-        setEventDate("");
-        setEventType("Wedding");
-        navigate(`/events/${created.id}`);
+    async function handleLogout() {
+        try { await logout(); navigate("/login"); } catch { /* ignore */ }
     }
 
     return (
         <div className="page-wrap">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">
-                        Dashboard
-                    </h1>
-                    <p className="mt-1 text-sm muted">
-                        Signed in as {currentUser?.name} ({currentUser?.email})
+                    <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>Dashboard</h1>
+                    <p style={{ marginTop: 4, fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
+                        {user?.fullname || user?.username || user?.email}
                     </p>
                 </div>
-                <button
-                    type="button"
-                    onClick={logout}
-                    className="btn-secondary px-4 py-2 text-sm"
-                >
-                    Log Out
-                </button>
-            </div>
-
-            <div className="mt-6 inline-flex rounded-xl border border-[#2a364d] bg-[#121a2a] p-1">
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("my-events")}
-                    className={`rounded-lg px-4 py-2 text-sm ${
-                        activeTab === "my-events"
-                            ? "bg-[#1f2e4c] text-[#f6f9ff]"
-                            : "text-[#a2b1cd] hover:text-[#dbe6ff]"
-                    }`}
-                >
-                    My Events
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("shared")}
-                    className={`rounded-lg px-4 py-2 text-sm ${
-                        activeTab === "shared"
-                            ? "bg-[#1f2e4c] text-[#f6f9ff]"
-                            : "text-[#a2b1cd] hover:text-[#dbe6ff]"
-                    }`}
-                >
-                    Shared With Me
-                </button>
-            </div>
-
-            {activeTab === "my-events" ? (
-                <section className="mt-4">
-                    <button
-                        type="button"
-                        onClick={() => setShowModal(true)}
-                        className="btn-primary w-full px-4 py-2.5 text-sm sm:w-auto"
-                    >
-                        Create Event
+                <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => setShowModal(true)} className="btn-primary" style={{ padding: "0.5rem 1rem" }}>
+                        + New Event
                     </button>
+                    <button onClick={handleLogout} className="btn-secondary" style={{ padding: "0.5rem 1rem" }}>
+                        Log Out
+                    </button>
+                </div>
+            </div>
 
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        {myEvents.map((eventItem) => (
-                            <article
-                                key={eventItem.id}
-                                className="card group p-5"
-                            >
-                                {(() => {
-                                    const cardStatus =
-                                        getEventCardStatus(eventItem);
-                                    const coverUrl =
-                                        getEventCoverPhoto(eventItem);
-
-                                    return (
-                                        <>
-                                            <div className="overflow-hidden rounded-lg border border-[#2b3954] bg-[#101a2b]">
-                                                <img
-                                                    src={coverUrl}
-                                                    alt={`${eventItem.name} cover`}
-                                                    className="h-40 w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
-                                                />
-                                            </div>
-                                            <div className="flex items-start justify-between gap-3">
-                                                <h2 className="mt-3 line-clamp-2 font-semibold text-[#eef3ff] group-hover:text-white">
-                                                    {eventItem.name}
-                                                </h2>
-                                                <span
-                                                    className={`mt-3 ${cardStatus.className}`}
-                                                >
-                                                    {cardStatus.label}
-                                                </span>
-                                            </div>
-                                            <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg border border-[#2b3954] bg-[#101a2b] p-3 text-xs">
-                                                <div>
-                                                    <p className="muted">
-                                                        Date
-                                                    </p>
-                                                    <p className="mt-1 text-[#d7e2fa]">
-                                                        {eventItem.date}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="muted">
-                                                        Type
-                                                    </p>
-                                                    <p className="mt-1 text-[#d7e2fa]">
-                                                        {eventItem.type}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="muted">
-                                                        Photos
-                                                    </p>
-                                                    <p className="mt-1 text-[#d7e2fa]">
-                                                        {
-                                                            eventItem.photos
-                                                                .length
-                                                        }
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="muted">
-                                                        Guests
-                                                    </p>
-                                                    <p className="mt-1 text-[#d7e2fa]">
-                                                        {
-                                                            eventItem.guests
-                                                                .length
-                                                        }
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <Link
-                                                to={`/events/${eventItem.id}`}
-                                                className="btn-primary mt-4 inline-block px-4 py-2 text-sm"
-                                            >
-                                                View Event
-                                            </Link>
-                                        </>
-                                    );
-                                })()}
-                            </article>
-                        ))}
-
-                        {myEvents.length === 0 ? (
-                            <article className="card p-5">
-                                <div className="overflow-hidden rounded-lg border border-[#2b3954] bg-[#101a2b]">
-                                    <img
-                                        src={myEventDummyCard.coverUrl}
-                                        alt={`${myEventDummyCard.name} cover`}
-                                        className="h-40 w-full object-cover"
-                                    />
-                                </div>
-                                <div className="mt-3 flex items-start justify-between gap-3">
-                                    <h2 className="line-clamp-2 font-semibold text-[#eef3ff]">
-                                        {myEventDummyCard.name}
-                                    </h2>
-                                    <span
-                                        className={getStatusClass(
-                                            myEventDummyCard.status,
-                                        )}
-                                    >
-                                        {myEventDummyCard.status}
-                                    </span>
-                                </div>
-                                <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg border border-[#2b3954] bg-[#101a2b] p-3 text-xs">
-                                    <div>
-                                        <p className="muted">Date</p>
-                                        <p className="mt-1 text-[#d7e2fa]">
-                                            {myEventDummyCard.date}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="muted">Type</p>
-                                        <p className="mt-1 text-[#d7e2fa]">
-                                            {myEventDummyCard.type}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="muted">Photos</p>
-                                        <p className="mt-1 text-[#d7e2fa]">
-                                            {myEventDummyCard.photos}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="muted">Guests</p>
-                                        <p className="mt-1 text-[#d7e2fa]">
-                                            {myEventDummyCard.guests}
-                                        </p>
-                                    </div>
-                                </div>
-                                <Link
-                                    to={`/events/${myEventDummyCard.eventId}`}
-                                    className="btn-primary mt-4 inline-block px-4 py-2 text-sm"
-                                >
-                                    View Event
-                                </Link>
-                            </article>
-                        ) : null}
-                    </div>
-                </section>
-            ) : (
-                <section className="mt-4 space-y-4">
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        {sharedEvents.map((eventItem) => (
-                            <article key={eventItem.id} className="card p-5">
-                                <div className="overflow-hidden rounded-lg border border-[#2b3954] bg-[#101a2b]">
-                                    <img
-                                        src={getEventCoverPhoto(eventItem)}
-                                        alt={`${eventItem.name} cover`}
-                                        className="h-40 w-full object-cover"
-                                    />
-                                </div>
-                                <h2 className="mt-3 font-semibold text-[#eef3ff]">
-                                    {eventItem.name}
-                                </h2>
-                                <div className="mt-3 rounded-lg border border-[#2b3954] bg-[#101a2b] p-3 text-xs">
-                                    <p className="muted">Photographer</p>
-                                    <p className="mt-1 text-sm text-[#d7e2fa]">
-                                        Rahul Sharma
-                                    </p>
-                                    <p className="mt-3 muted">Photos</p>
-                                    <p className="mt-1 text-sm text-[#d7e2fa]">
-                                        {eventItem.photos.length}
-                                    </p>
-                                </div>
-                                <Link
-                                    to={`/events/${eventItem.id}/guest/collection`}
-                                    className="btn-primary mt-4 inline-block px-4 py-2 text-sm"
-                                >
-                                    View Event
-                                </Link>
-                            </article>
-                        ))}
-                    </div>
-
-                    <div>
-                        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[#93a4c4]">
-                            Suggested Shared Events
-                        </p>
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                            {sharedDummyCards.map((card) => (
-                                <article key={card.id} className="card p-5">
-                                    <div className="overflow-hidden rounded-lg border border-[#2b3954] bg-[#101a2b]">
-                                        <img
-                                            src={card.coverUrl}
-                                            alt={`${card.name} cover`}
-                                            className="h-40 w-full object-cover"
-                                        />
-                                    </div>
-                                    <h2 className="mt-3 font-semibold text-[#eef3ff]">
-                                        {card.name}
-                                    </h2>
-                                    <div className="mt-3 rounded-lg border border-[#2b3954] bg-[#101a2b] p-3 text-xs">
-                                        <p className="muted">Photographer</p>
-                                        <p className="mt-1 text-sm text-[#d7e2fa]">
-                                            {card.photographer}
-                                        </p>
-                                        <p className="mt-3 muted">Photos</p>
-                                        <p className="mt-1 text-sm text-[#d7e2fa]">
-                                            {card.photos}
-                                        </p>
-                                    </div>
-                                    <Link
-                                        to={`/events/${card.eventId}/guest/collection`}
-                                        className="btn-secondary mt-4 inline-block px-4 py-2 text-sm"
-                                    >
-                                        View Event
-                                    </Link>
-                                </article>
-                            ))}
-                        </div>
-                    </div>
-
-                    {sharedEvents.length === 0 &&
-                    sharedDummyCards.length === 0 ? (
-                        <div className="card col-span-full p-10 text-center">
-                            <p className="text-3xl">🔗</p>
-                            <p className="mt-2 text-base font-medium">
-                                No shared events yet
-                            </p>
-                            <p className="mt-1 text-sm muted">
-                                Ask a photographer to share an event link.
-                            </p>
-                        </div>
-                    ) : null}
-                </section>
-            )}
-
-            {showModal ? (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-                    <div className="card w-full max-w-md p-5 sm:p-6">
-                        <h2 className="text-xl font-semibold">Create Event</h2>
-                        <form
-                            onSubmit={handleCreateEvent}
-                            className="mt-4 space-y-3"
+            <section style={{ marginTop: 28 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                    <div className="tab-bar" role="tablist" aria-label="Event sections">
+                        <button
+                            role="tab"
+                            aria-selected={activeEventsTab === "my"}
+                            className={`tab-btn ${activeEventsTab === "my" ? "active" : ""}`}
+                            onClick={() => setActiveEventsTab("my")}
                         >
+                            My Events
+                        </button>
+                        <button
+                            role="tab"
+                            aria-selected={activeEventsTab === "shared"}
+                            className={`tab-btn ${activeEventsTab === "shared" ? "active" : ""}`}
+                            onClick={() => setActiveEventsTab("shared")}
+                        >
+                            Shared Events
+                        </button>
+                    </div>
+                    <span style={{
+                        fontSize: "0.6875rem", fontWeight: 600, padding: "0.2rem 0.6rem",
+                        borderRadius: 999,
+                        background: activeEventsTab === "my" ? "var(--accent-glow)" : "rgba(16,185,129,0.12)",
+                        color: activeEventsTab === "my" ? "var(--accent-hover)" : "#6ee7b7",
+                        border: activeEventsTab === "my" ? "1px solid rgba(99,102,241,0.3)" : "1px solid rgba(16,185,129,0.3)",
+                    }}>
+                        {activeEventsTab === "my"
+                            ? (loadingCreated ? "…" : createdEvents.length)
+                            : (loadingShared ? "…" : sharedEvents.length)}
+                    </span>
+                </div>
+
+                {activeEventsTab === "my" ? (
+                    <div style={{ marginTop: 16 }}>
+                        {loadingCreated ? (
+                            <SkeletonCards count={3} />
+                        ) : createdEvents.length === 0 ? (
+                            <div className="card" style={{ padding: "2.5rem", textAlign: "center" }}>
+                                <div style={{ fontSize: 44 }}>📷</div>
+                                <h3 style={{ marginTop: 10, fontSize: "1rem", fontWeight: 600, color: "#fff" }}>No events created yet</h3>
+                                <p style={{ marginTop: 4, fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
+                                    Create your first event to start uploading and sharing photos
+                                </p>
+                                <button onClick={() => setShowModal(true)} className="btn-primary" style={{ marginTop: 16, padding: "0.5rem 1.25rem" }}>
+                                    Create Event
+                                </button>
+                            </div>
+                        ) : (
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
+                                {createdEvents.map((ev) => (
+                                    <EventCard key={ev._id} ev={ev} linkTo={`/events/${ev._id}`} />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div style={{ marginTop: 16 }}>
+                        {loadingShared ? (
+                            <SkeletonCards count={2} />
+                        ) : sharedEvents.length === 0 ? (
+                            <div className="card" style={{ padding: "2.5rem", textAlign: "center" }}>
+                                <div style={{ fontSize: 44 }}>🔗</div>
+                                <h3 style={{ marginTop: 10, fontSize: "1rem", fontWeight: 600, color: "#fff" }}>No shared events</h3>
+                                <p style={{ marginTop: 4, fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
+                                    Events shared with you will appear here when you access a guest link
+                                </p>
+                            </div>
+                        ) : (
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
+                                {sharedEvents.map((ev) => (
+                                    <EventCard key={ev._id} ev={ev} linkTo={`/events/${ev._id}/guest/collection`} />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </section>
+
+            {/* ═══ Create Event Modal ═══ */}
+            {showModal && (
+                <div className="modal-backdrop">
+                    <div className="card" style={{ width: "100%", maxWidth: 440, padding: "1.75rem" }}>
+                        <h2 style={{ fontSize: "1.25rem", fontWeight: 600, color: "#fff" }}>Create Event</h2>
+                        <form onSubmit={handleCreate} style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 16 }}>
                             <label className="ui-label">
                                 Event Name
-                                <input
-                                    value={eventName}
-                                    onChange={(e) =>
-                                        setEventName(e.target.value)
-                                    }
-                                    className="ui-input"
-                                />
+                                <input value={eventName} onChange={(e) => setEventName(e.target.value)} className="ui-input" placeholder="Wedding, Party..." />
                             </label>
-
                             <label className="ui-label">
                                 Event Date
-                                <input
-                                    type="date"
-                                    value={eventDate}
-                                    onChange={(e) =>
-                                        setEventDate(e.target.value)
-                                    }
-                                    className="ui-input"
-                                />
+                                <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} className="ui-input" />
                             </label>
-
                             <label className="ui-label">
-                                Event Type
-                                <select
-                                    value={eventType}
-                                    onChange={(e) =>
-                                        setEventType(
-                                            e.target.value as EventType,
-                                        )
-                                    }
-                                    className="ui-input"
-                                >
-                                    <option value="Wedding">Wedding</option>
-                                    <option value="Corporate">Corporate</option>
-                                    <option value="Concert">Concert</option>
-                                    <option value="Other">Other</option>
+                                Access Level
+                                <select value={accessLevel} onChange={(e) => setAccessLevel(e.target.value as "spot" | "browse")} className="ui-input">
+                                    <option value="spot">Spot Only — Guests find their photos via selfie</option>
+                                    <option value="browse">Browse & Spot — Guests can also browse all photos</option>
                                 </select>
                             </label>
-
-                            {error ? (
-                                <p className="rounded-md border border-red-400/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-                                    {error}
-                                </p>
-                            ) : null}
-
-                            <div className="flex flex-col justify-end gap-2 sm:flex-row">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowModal(false)}
-                                    className="btn-secondary px-4 py-2 text-sm"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isCreating}
-                                    className="btn-primary px-4 py-2 text-sm"
-                                >
-                                    {isCreating ? "Creating..." : "Create"}
+                            {error && <div className="alert alert-error">{error}</div>}
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary" style={{ padding: "0.5rem 1rem" }}>Cancel</button>
+                                <button type="submit" disabled={creating} className="btn-primary" style={{ padding: "0.5rem 1rem" }}>
+                                    {creating ? "Creating..." : "Create"}
                                 </button>
                             </div>
                         </form>
                     </div>
                 </div>
-            ) : null}
+            )}
         </div>
     );
 }

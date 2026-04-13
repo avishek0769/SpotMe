@@ -65,17 +65,19 @@ const getSignedUrlForSelfie = asyncHandler(async (req, res) => {
         eventId,
     });
 
-    if (collection.selfies.length + fileCount > 3) {
+    const currentSelfieCount = collection?.selfies?.length || 0;
+
+    if (currentSelfieCount + fileCount > 3) {
         throw new ApiError(
             400,
-            `Selfie upload limit exceeded. You can upload a maximum of 3 selfies. You have already uploaded ${collection.selfies.length} selfie(s).`,
+            `Selfie upload limit exceeded. You can upload a maximum of 3 selfies. You have already uploaded ${currentSelfieCount} selfie(s).`,
         );
     }
 
     const urlPromises = Array.from({ length: fileCount }, () => {
         const command = new PutObjectCommand({
             Bucket: process.env.AWS_S3_BUCKET_NAME,
-            Key: `selfies/${uuidv4()}}`,
+            Key: `selfies/${uuidv4()}`,
         });
 
         return getSignedUrl(s3, command, { expiresIn: 3600 });
@@ -179,7 +181,12 @@ const downloadAll = asyncHandler(async (req, res) => {
     let allPhotos;
     if (collectionId) {
         allPhotos = await Collection.aggregate([
-            { $match: { _id: new mongoose.Types.ObjectId(collectionId) } },
+            {
+                $match: {
+                    _id: new mongoose.Types.ObjectId(collectionId),
+                    type: "event",
+                },
+            },
             { $unwind: "$myPhotos" },
             {
                 $lookup: {
@@ -193,7 +200,7 @@ const downloadAll = asyncHandler(async (req, res) => {
             { $replaceRoot: { newRoot: "$photoDetails" } },
         ]);
     } else {
-        allPhotos = await Photo.find({ eventId });
+        allPhotos = await Photo.find({ eventId, type: "event" });
     }
 
     if (allPhotos.length === 0) {

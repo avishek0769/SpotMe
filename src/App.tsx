@@ -16,10 +16,7 @@ function App() {
             <AppShell>
                 <Routes>
                     <Route path="/" element={<LandingPage />} />
-                    <Route
-                        path="/signup"
-                        element={<AuthPage mode="signup" />}
-                    />
+                    <Route path="/signup" element={<AuthPage mode="signup" />} />
                     <Route path="/login" element={<AuthPage mode="login" />} />
                     <Route
                         path="/dashboard"
@@ -37,16 +34,18 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
-                    <Route
-                        path="/events/:id/guest"
-                        element={<GuestEventPage />}
-                    />
+                    {/* Guest routes - sharable link uses /event/:id (backend pattern) */}
+                    <Route path="/event/:id" element={<GuestEventPage />} />
                     <Route
                         path="/events/:id/guest/collection"
-                        element={<GuestCollectionPage />}
+                        element={
+                            <ProtectedRoute>
+                                <GuestCollectionPage />
+                            </ProtectedRoute>
+                        }
                     />
-                    <Route path="*" element={<NotFoundPage />} />
                     <Route path="/home" element={<Navigate to="/" replace />} />
+                    <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </AppShell>
         </AppProvider>

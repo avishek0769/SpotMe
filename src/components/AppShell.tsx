@@ -2,66 +2,73 @@ import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 
-interface AppShellProps {
-    children: ReactNode;
-}
+interface AppShellProps { children: ReactNode; }
 
 export function AppShell({ children }: AppShellProps) {
     const location = useLocation();
-    const { currentUser } = useAppContext();
-
-    const onAuthRoute =
-        location.pathname === "/login" || location.pathname === "/signup";
+    const { user } = useAppContext();
+    const onAuth = location.pathname === "/login" || location.pathname === "/signup";
 
     return (
-        <div className="min-h-screen bg-transparent">
-            <header className="sticky top-0 z-40 border-b border-[#2a364d] bg-[#0b0f19]/90 backdrop-blur">
-                <div className="mx-auto flex h-16 w-full max-w-[1180px] items-center justify-between px-4">
-                    <Link
-                        to="/"
-                        className="text-base font-semibold tracking-tight text-[#e6edf8]"
-                    >
-                        SpotMe
+        <div style={{ minHeight: "100vh" }}>
+            <header
+                style={{
+                    position: "sticky", top: 0, zIndex: 40,
+                    borderBottom: "1px solid var(--border)",
+                    background: "rgba(9,13,20,0.85)",
+                    backdropFilter: "blur(16px)",
+                }}
+            >
+                <div
+                    style={{
+                        margin: "0 auto", display: "flex", alignItems: "center",
+                        justifyContent: "space-between", maxWidth: 1180,
+                        height: 60, padding: "0 1.25rem",
+                    }}
+                >
+                    <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{
+                            width: 28, height: 28, borderRadius: 8,
+                            background: "linear-gradient(135deg, var(--accent), var(--accent-hover))",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 14, fontWeight: 800, color: "#fff",
+                        }}>S</div>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.02em" }}>
+                            SpotMe
+                        </span>
                     </Link>
 
-                    <nav className="flex items-center gap-2 text-sm">
+                    <nav style={{ display: "flex", alignItems: "center", gap: 4, fontSize: "0.8125rem" }}>
                         <Link
                             to="/"
-                            className={`rounded-md px-3 py-2 ${
-                                location.pathname === "/"
-                                    ? "bg-[#1b2841] text-[#f5f8ff]"
-                                    : "text-[#9aa8c3]"
-                            }`}
-                        >
-                            Home
-                        </Link>
-                        {currentUser ? (
+                            style={{
+                                padding: "0.4rem 0.75rem", borderRadius: 8,
+                                textDecoration: "none",
+                                color: location.pathname === "/" ? "#fff" : "var(--text-secondary)",
+                                background: location.pathname === "/" ? "var(--surface-elevated)" : "transparent",
+                            }}
+                        >Home</Link>
+                        {user ? (
                             <Link
                                 to="/dashboard"
-                                className={`rounded-md px-3 py-2 ${
-                                    location.pathname.startsWith(
-                                        "/dashboard",
-                                    ) ||
-                                    location.pathname.startsWith("/events/")
-                                        ? "bg-[#1b2841] text-[#f5f8ff]"
-                                        : "text-[#9aa8c3]"
-                                }`}
-                            >
-                                Dashboard
-                            </Link>
+                                style={{
+                                    padding: "0.4rem 0.75rem", borderRadius: 8,
+                                    textDecoration: "none",
+                                    color: (location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/events/"))
+                                        ? "#fff" : "var(--text-secondary)",
+                                    background: (location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/events/"))
+                                        ? "var(--surface-elevated)" : "transparent",
+                                }}
+                            >Dashboard</Link>
                         ) : null}
-                        {!currentUser && !onAuthRoute ? (
-                            <Link
-                                to="/login"
-                                className="btn-secondary px-3 py-2"
-                            >
+                        {!user && !onAuth ? (
+                            <Link to="/login" className="btn-secondary" style={{ padding: "0.4rem 0.875rem", textDecoration: "none" }}>
                                 Log In
                             </Link>
                         ) : null}
                     </nav>
                 </div>
             </header>
-
             <main>{children}</main>
         </div>
     );

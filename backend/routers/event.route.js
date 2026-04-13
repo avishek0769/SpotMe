@@ -2,7 +2,8 @@ import { Router } from "express";
 import { verifyStrictJWT, verifyJWT } from "../middlewares/auth.middleware.js";
 import {
     createEvent,
-    getAllEvents,
+    getAllCreatedEvents,
+    getAllSharedEvents,
     deleteEvent,
     editEvent,
     enqueueBatch,
@@ -14,7 +15,8 @@ import {
 const eventRouter = Router();
 
 eventRouter.route("/create").post(verifyStrictJWT, createEvent);
-eventRouter.route("/list").get(verifyStrictJWT, getAllEvents);
+eventRouter.route("/created/list").get(verifyStrictJWT, getAllCreatedEvents);
+eventRouter.route("/shared/list").get(verifyStrictJWT, getAllSharedEvents);
 eventRouter.route("/details/:eventId").get(verifyStrictJWT, getDetails);
 eventRouter.route("/all-photos/:eventId").get(verifyStrictJWT, getAllPhotos);
 eventRouter.route("/all-guests/:eventId").get(verifyStrictJWT, getAllGuests);
