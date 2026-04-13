@@ -17,19 +17,27 @@ function formatDate(d: string) {
     return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
+function getCoverImageUrl(coverImage: EventData["coverImage"]) {
+    if (!coverImage) return null;
+    if (typeof coverImage === "string") return coverImage;
+    return coverImage.url || null;
+}
+
 function EventCard({ ev, linkTo }: { ev: EventData; linkTo: string }) {
+    const coverImageUrl = getCoverImageUrl(ev.coverImage);
+
     return (
         <Link to={linkTo} style={{ textDecoration: "none", color: "inherit" }}>
             <article className="card" style={{ padding: 20, height: "100%", display: "flex", flexDirection: "column" }}>
                 <div style={{
                     height: 120, borderRadius: 12, overflow: "hidden",
-                    background: ev.coverImage
-                        ? `url(${ev.coverImage}) center/cover no-repeat`
+                    background: coverImageUrl
+                        ? `url(${coverImageUrl}) center/cover no-repeat`
                         : "linear-gradient(135deg, var(--surface-elevated), var(--bg-soft))",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     border: "1px solid var(--border)",
                 }}>
-                    {!ev.coverImage && <span style={{ fontSize: 36 }}>📸</span>}
+                    {!coverImageUrl && <span style={{ fontSize: 36 }}>📸</span>}
                 </div>
                 <div style={{ marginTop: 14, display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
                     <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "#fff", lineHeight: 1.3 }}>{ev.name}</h3>

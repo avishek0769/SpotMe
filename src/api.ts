@@ -1,9 +1,7 @@
 const BASE = import.meta.env.VITE_API_BASE_URL || "/api/v1";
 
 async function request<T>(url: string, opts: RequestInit = {}): Promise<T> {
-    const accessToken = localStorage.getItem("spotme.accessToken");
     const headers: Record<string, string> = { ...(opts.headers as Record<string, string>) };
-    if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
     if (!(opts.body instanceof FormData)) headers["Content-Type"] = "application/json";
 
     const res = await fetch(`${BASE}${url}`, { ...opts, headers, credentials: "include" });
@@ -11,17 +9,25 @@ async function request<T>(url: string, opts: RequestInit = {}): Promise<T> {
     if (res.status === 452) {
         const refreshed = await refreshTokens();
         if (refreshed) {
-            headers["Authorization"] = `Bearer ${localStorage.getItem("spotme.accessToken")}`;
             const retry = await fetch(`${BASE}${url}`, { ...opts, headers, credentials: "include" });
             if (!retry.ok) { const err = await retry.json().catch(() => ({ message: "Request failed" })); throw new Error(err.message); }
             return retry.json() as Promise<T>;
         }
-        localStorage.removeItem("spotme.accessToken"); localStorage.removeItem("spotme.refreshToken"); localStorage.removeItem("spotme.user");
-        window.location.href = "/login"; throw new Error("Session expired");
+        throw new Error("AUTH_REQUIRED");
     }
     if (res.headers.get("content-type")?.includes("application/zip")) return res as unknown as T;
     if (!res.ok) { const err = await res.json().catch(() => ({ message: "Request failed" })); throw new Error(err.message); }
     return res.json() as Promise<T>;
+}
+
+async function requestRaw(url: string, opts: RequestInit = {}): Promise<Response> {
+    const res = await fetch(`${BASE}${url}`, { ...opts, credentials: "include" });
+    if (res.status !== 452) return res;
+
+    const refreshed = await refreshTokens();
+    if (!refreshed) throw new Error("AUTH_REQUIRED");
+
+    return fetch(`${BASE}${url}`, { ...opts, credentials: "include" });
 }
 
 interface ApiRes<T> { statusCode: number; data: T; message: string; }
@@ -34,26 +40,22 @@ export async function verifyEmailApi(email: string, code: string) {
     return request<ApiRes<Record<string, unknown>>>("/user/verify-email", { method: "POST", body: JSON.stringify({ email, code }) });
 }
 export async function register(data: { fullname: string; username: string; email: string; password: string }) {
-    const res = await request<ApiRes<UserData>>("/user/register", { method: "POST", body: JSON.stringify(data) });
-    storeSession(res.data); return res;
+    return request<ApiRes<UserData>>("/user/register", { method: "POST", body: JSON.stringify(data) });
 }
 export async function login(data: { email?: string; username?: string; password: string }) {
-    const res = await request<ApiRes<UserData>>("/user/login", { method: "POST", body: JSON.stringify(data) });
-    storeSession(res.data); return res;
+    return request<ApiRes<UserData>>("/user/login", { method: "POST", body: JSON.stringify(data) });
 }
 export async function logout() {
-    try { await request<ApiRes<object>>("/user/logout", { method: "GET" }); } finally {
-        localStorage.removeItem("spotme.accessToken"); localStorage.removeItem("spotme.refreshToken"); localStorage.removeItem("spotme.user");
-    }
+    return request<ApiRes<object>>("/user/logout", { method: "GET" });
 }
 export async function refreshTokens(): Promise<boolean> {
     try {
-        const rt = localStorage.getItem("spotme.refreshToken"); if (!rt) return false;
-        const res = await fetch(`${BASE}/user/refresh-auth-tokens`, { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${rt}` }, credentials: "include" });
+        const res = await fetch(`${BASE}/user/refresh-auth-tokens`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+        });
         if (!res.ok) return false;
-        const json = (await res.json()) as ApiRes<{ accessToken: string; refreshToken: string }>;
-        localStorage.setItem("spotme.accessToken", json.data.accessToken);
-        if (json.data.refreshToken) localStorage.setItem("spotme.refreshToken", json.data.refreshToken);
         return true;
     } catch { return false; }
 }
@@ -83,6 +85,9 @@ export async function getEventGuests(eventId: string) { return request<ApiRes<Gu
 export async function enqueueBatch(eventId: string, urls: string[]) {
     return request<ApiRes<null>>(`/event/enqueue-batch/${eventId}`, { method: "POST", body: JSON.stringify({ urls }) });
 }
+export async function completeEventUpload(eventId: string) {
+    return request<ApiRes<EventData>>(`/event/complete/${eventId}`, { method: "PATCH" });
+}
 
 // ─── PHOTOS ───
 export async function getSignedUrlForEvent(eventId: string) {
@@ -95,16 +100,17 @@ export async function createSelfie(eventId: string, urls: string[]) {
     return request<ApiRes<{ photos: PhotoData[]; collection: CollectionData }>>(`/photo/create/selfie/${eventId}`, { method: "POST", body: JSON.stringify({ urls }) });
 }
 export async function downloadAllEvent(eventId: string) {
-    const t = localStorage.getItem("spotme.accessToken");
-    return fetch(`${BASE}/photo/download/all/event/${eventId}`, { method: "GET", headers: t ? { Authorization: `Bearer ${t}` } : {}, credentials: "include" });
+    return requestRaw(`/photo/download/all/event/${eventId}`, { method: "GET" });
 }
 export async function downloadAllCollection(collectionId: string, eventId: string) {
-    const t = localStorage.getItem("spotme.accessToken");
-    return fetch(`${BASE}/photo/download/all/collection/${collectionId}/${eventId}`, { method: "GET", headers: t ? { Authorization: `Bearer ${t}` } : {}, credentials: "include" });
+    return requestRaw(`/photo/download/all/collection/${collectionId}/${eventId}`, { method: "GET" });
 }
 export async function downloadSelected(eventId: string, fileNames: string[]) {
-    const t = localStorage.getItem("spotme.accessToken");
-    return fetch(`${BASE}/photo/download/selected/${eventId}`, { method: "POST", headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) }, credentials: "include", body: JSON.stringify({ fileNames }) });
+    return requestRaw(`/photo/download/selected/${eventId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileNames }),
+    });
 }
 export async function deletePhotos(eventId: string, fileNames: string[], photoIds: string[]) {
     return request<ApiRes<{ deletedCount: number }>>(`/photo/delete/event/${eventId}`, { method: "DELETE", body: JSON.stringify({ fileNames, photoIds }) });
@@ -169,22 +175,33 @@ export async function uploadSelfieToS3(signedUrl: string, file: File): Promise<s
 }
 
 // ─── Types ───
-export interface UserData { _id: string; fullname?: string; username?: string; email: string; isVerified?: boolean; accessToken?: string; refreshToken?: string; }
-export interface EventData { _id: string; name: string; eventDate: string; userId: string; coverImage: string | null; accessLevel: "spot" | "browse"; sharableLink: string; expiresAt: string; status: "empty" | "processing" | "expired"; }
+export interface UserData { _id: string; fullname?: string; username?: string; email: string; isVerified?: boolean; }
+export interface EventData {
+    _id: string;
+    name: string;
+    eventDate: string;
+    userId: string;
+    coverImage: { url?: string } | string | null;
+    accessLevel: "spot" | "browse";
+    sharableLink: string;
+    expiresAt: string;
+    status: "empty" | "processing" | "expired";
+}
 export interface PhotoData { _id: string; eventId: string; url: string; type: "selfie" | "event"; createdAt?: string; updatedAt?: string; }
-export interface GuestData { _id: string; userId: string; eventId: string; accessedAt: string; }
+export interface GuestData {
+    _id: string;
+    userId?: string;
+    eventId: string;
+    accessedAt: string;
+    user?: {
+        _id: string;
+        fullname?: string;
+        username?: string;
+        email?: string;
+    };
+}
 export interface CollectionData { _id: string; userId: string; eventId: string; selfies: PhotoData[] | string[]; myPhotos: PhotoData[] | string[]; }
 
-function storeSession(data: UserData) {
-    if (data.accessToken) localStorage.setItem("spotme.accessToken", data.accessToken);
-    if (data.refreshToken) localStorage.setItem("spotme.refreshToken", data.refreshToken);
-    const u = { ...data }; delete u.accessToken; delete u.refreshToken;
-    localStorage.setItem("spotme.user", JSON.stringify(u));
-}
-export function getStoredUser(): UserData | null {
-    const raw = localStorage.getItem("spotme.user"); if (!raw) return null;
-    try { return JSON.parse(raw) as UserData; } catch { return null; }
-}
 export async function triggerDownload(response: Response, filename: string) {
     const blob = await response.blob(); const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = filename;

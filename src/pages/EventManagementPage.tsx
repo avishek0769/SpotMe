@@ -137,9 +137,12 @@ export function EventManagementPage() {
                 if (phase === "done") {
                     setUploadPhase("done");
                     setTimeout(() => setUploadPhase("idle"), 2000);
-                    loadPhotos();
                 }
             });
+            await api.completeEventUpload(id);
+            const eventRes = await api.getEventDetails(id);
+            setEvent(eventRes.data);
+            loadPhotos();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Upload failed");
             setUploadPhase("idle");
@@ -197,6 +200,14 @@ export function EventManagementPage() {
 
     // ─── Guest collection ───
     async function loadGuestCollection(guest: GuestData) {
+        if (expandedGuest?._id === guest._id) {
+            setExpandedGuest(null);
+            setGuestCollectionPhotos([]);
+            setGuestCollectionId(null);
+            setSelectedGuestPhotos([]);
+            return;
+        }
+
         if (!id || !guest.userId) return;
         setExpandedGuest(guest);
         setGuestCollectionLoading(true);
@@ -539,7 +550,7 @@ export function EventManagementPage() {
                             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8125rem" }}>
                                 <thead>
                                     <tr style={{ borderBottom: "1px solid var(--border)", color: "var(--text-secondary)", textAlign: "left" }}>
-                                        <th style={{ padding: "0.75rem" }}>Guest ID</th>
+                                        <th style={{ padding: "0.75rem" }}>Guest</th>
                                         <th style={{ padding: "0.75rem" }}>Last Accessed</th>
                                         <th style={{ padding: "0.75rem" }}>Actions</th>
                                     </tr>
@@ -548,7 +559,7 @@ export function EventManagementPage() {
                                     {guests.map((guest) => (
                                         <tr key={guest._id} style={{ borderBottom: "1px solid var(--border)" }}>
                                             <td style={{ padding: "0.75rem", color: "#fff" }}>
-                                                {guest.userId?.slice(-8) || "Anonymous"}
+                                                {guest.user?.fullname || guest.userId?.slice(-8) || "Anonymous"}
                                             </td>
                                             <td style={{ padding: "0.75rem", color: "var(--text-secondary)" }}>
                                                 {new Date(guest.accessedAt).toLocaleString()}
@@ -577,7 +588,7 @@ export function EventManagementPage() {
                         <div className="card" style={{ marginTop: 16, padding: "1.25rem", border: "1px solid var(--accent-glow)" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
                                 <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "#fff" }}>
-                                    Collection — {expandedGuest.userId?.slice(-8)}
+                                    Collection — {expandedGuest.user?.fullname || expandedGuest.userId?.slice(-8) || "Anonymous"}
                                 </h3>
                                 <div style={{ display: "flex", gap: 6 }}>
                                     <button onClick={openAddPhotoModal} className="btn-primary" style={{ padding: "0.35rem 0.75rem", fontSize: "0.75rem" }}>
