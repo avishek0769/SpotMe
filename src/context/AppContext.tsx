@@ -21,28 +21,40 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<UserData | null>(() => api.getStoredUser());
-    const [isLoading, setIsLoading] = useState(() => Boolean(api.getStoredUser()));
+    const [user, setUser] = useState<UserData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const stored = api.getStoredUser();
-        if (!stored) {
-            return;
+        async function bootstrapSession() {
+            try {
+                const res = await api.getCurrentUser();
+                setUser(res.data);
+            } catch {
+                const refreshed = await api.refreshTokens();
+                if (!refreshed) {
+                    setUser(null);
+                    setIsLoading(false);
+                    return;
+                }
+
+                try {
+                    const res = await api.getCurrentUser();
+                    setUser(res.data);
+                } catch {
+                    setUser(null);
+                }
+            } finally {
+                setIsLoading(false);
+            }
         }
-        api.getCurrentUser()
-            .then((res) => { setUser(res.data); })
-            .catch(() => {
-                localStorage.removeItem("spotme.accessToken");
-                localStorage.removeItem("spotme.refreshToken");
-                localStorage.removeItem("spotme.user");
-                setUser(null);
-            })
-            .finally(() => setIsLoading(false));
+
+        void bootstrapSession();
     }, []);
 
     const loginFn = useCallback(async (email: string, password: string) => {
-        const res = await api.login({ email, password });
-        setUser(res.data);
+        await api.login({ email, password });
+        const userRes = await api.getCurrentUser();
+        setUser(userRes.data);
     }, []);
 
     const logoutFn = useCallback(async () => {

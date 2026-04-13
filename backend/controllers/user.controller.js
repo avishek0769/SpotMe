@@ -101,28 +101,33 @@ const userRegister = asyncHandler(async (req, res) => {
         throw new ApiError(400, "All fields are required");
     }
 
-    let createdUser = await User.findOne({ email, isVerified: true }).select(
-        "-password -refreshToken",
-    );
+    let createdUser = await User.findOne({ email, isVerified: true });
     if (!createdUser)
         throw new ApiError(500, "Something went wrong while registering");
-
-    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
-        createdUser._id,
-    );
 
     createdUser.fullname = fullname;
     createdUser.username = username;
     createdUser.password = password;
-    createdUser.refreshToken = refreshToken;
     await createdUser.save();
 
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+        createdUser._id,
+    );
+    createdUser.refreshToken = refreshToken;
+    await createdUser.save({ validateBeforeSave: false });
+
+    const registeredUser = await User.findById(createdUser._id).select(
+        "-password -refreshToken",
+    );
+
     return res
-        .status(200)
+        .status(201)
+        .cookie("accessToken", accessToken, AccessOptions)
+        .cookie("refreshToken", refreshToken, RefreshOptions)
         .json(
             new ApiResponse(
                 201,
-                { ...createdUser._doc, accessToken },
+                registeredUser,
                 "User Registered Successfully !!",
             ),
         );
@@ -161,11 +166,7 @@ const userLogIn = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 201,
-                {
-                    ...loggedInUser._doc,
-                    accessToken: accessToken,
-                    refreshToken: refreshToken,
-                },
+                loggedInUser,
                 "User Logged in successfully !!",
             ),
         );
@@ -186,7 +187,7 @@ const userLogOut = asyncHandler(async (req, res) => {
 const refreshAuthTokens = asyncHandler(async (req, res) => {
     const incomingToken =
         req.cookies?.refreshToken ||
-        req.headers("Authorization").replace("Bearer ", "");
+        req.header("Authorization")?.replace("Bearer ", "");
     if (!incomingToken) throw new ApiError(401, "No Refresh Token found");
 
     const decodedToken = jwt.verify(
@@ -203,15 +204,19 @@ const refreshAuthTokens = asyncHandler(async (req, res) => {
             "Unauthorised access -> Refresh token did not match",
         );
 
-    const { accessToken, newRefreshToken } =
+    const { accessToken, refreshToken } =
         await generateAccessAndRefreshTokens(user._id);
+
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
 
     res.status(200)
         .cookie("accessToken", accessToken, AccessOptions)
+        .cookie("refreshToken", refreshToken, RefreshOptions)
         .json(
             new ApiResponse(
                 200,
-                { ...user, accessToken, refreshToken: newRefreshToken },
+                { ...user._doc },
                 "Access Token refreshed !",
             ),
         );

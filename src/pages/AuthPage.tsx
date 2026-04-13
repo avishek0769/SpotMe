@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import * as api from "../api";
@@ -10,7 +10,7 @@ type SignupStep = "email" | "code" | "details";
 export function AuthPage({ mode }: AuthPageProps) {
     const navigate = useNavigate();
     const location = useLocation();
-    const { login, setUser } = useAppContext();
+    const { login, setUser, user } = useAppContext();
 
     const isSignup = mode === "signup";
 
@@ -36,8 +36,49 @@ export function AuthPage({ mode }: AuthPageProps) {
     const [error, setError] = useState("");
     const [info, setInfo] = useState("");
     const [loading, setLoading] = useState(false);
+    const [checkingSession, setCheckingSession] = useState(true);
 
     const from = location.state?.from ?? "/dashboard";
+
+    useEffect(() => {
+        if (user) {
+            navigate("/dashboard", { replace: true });
+            return;
+        }
+
+        async function guardAuthPages() {
+            try {
+                const me = await api.getCurrentUser();
+                setUser(me.data);
+                navigate("/dashboard", { replace: true });
+                return;
+            } catch {
+                const refreshed = await api.refreshTokens();
+                if (refreshed) {
+                    try {
+                        const me = await api.getCurrentUser();
+                        setUser(me.data);
+                        navigate("/dashboard", { replace: true });
+                        return;
+                    } catch {
+                        // Login required.
+                    }
+                }
+            } finally {
+                setCheckingSession(false);
+            }
+        }
+
+        void guardAuthPages();
+    }, [navigate, setUser, user]);
+
+    if (checkingSession) {
+        return (
+            <div className="page-wrap" style={{ display: "flex", minHeight: "calc(100vh - 60px)", alignItems: "center", justifyContent: "center" }}>
+                <div className="spinner" />
+            </div>
+        );
+    }
 
     async function handleLogin(e: FormEvent) {
         e.preventDefault(); setError("");
@@ -84,11 +125,12 @@ export function AuthPage({ mode }: AuthPageProps) {
         }
         setLoading(true);
         try {
-            const res = await api.register({
+            await api.register({
                 fullname: fullname.trim(), username: username.trim(),
                 email: signupEmail.trim(), password: signupPassword.trim(),
             });
-            setUser(res.data);
+            const me = await api.getCurrentUser();
+            setUser(me.data);
             navigate("/dashboard", { replace: true });
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Registration failed");

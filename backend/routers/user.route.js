@@ -17,7 +17,6 @@ const userRouter = Router();
 userRouter.route("/send-verification-code").post(sendVerificationCode);
 userRouter.route("/verify-email").post(verifyEmail);
 userRouter.route("/register").post(userRegister);
-userRouter.route("/logout").get(verifyStrictJWT, userLogOut);
 userRouter.route("/login").post(userLogIn);
 userRouter.route("/logout").get(verifyStrictJWT, userLogOut);
 userRouter.route("/refresh-auth-tokens").patch(refreshAuthTokens);
