@@ -1,11 +1,11 @@
 import "dotenv/config";
 import { Worker } from "bullmq";
-import redis from "./utils/redis.js";
+import redis from "../utils/redis.js";
 import fs from "fs/promises";
 import faceapi from "@vladmandic/face-api";
 import canvas from "canvas";
 import { v4 as uuidv4 } from "uuid";
-import qdrant from "./utils/qdrant.js";
+import qdrant from "../utils/qdrant.js";
 
 const { Canvas, Image, ImageData } = canvas;
 

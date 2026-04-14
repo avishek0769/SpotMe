@@ -4,7 +4,7 @@ import Event from "../models/event.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
-import { indexFacesInImage } from "../imageWorker.js";
+import { indexFacesInImage } from "../workers/imageWorker.js";
 import qdrant from "../utils/qdrant.js";
 import Collection from "../models/collection.model.js";
 import { v4 as uuidv4 } from "uuid";
