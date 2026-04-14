@@ -4,6 +4,8 @@
 
 Face recognition platform for event photography that helps guests instantly find their photos.
 
+Check out the live website here: [SpotMe](https://www.loom.com/share/spotme-demo)
+
 ## Table of Contents
 
 - [Overview](#overview)
