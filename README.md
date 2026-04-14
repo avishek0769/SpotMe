@@ -159,20 +159,26 @@ pnpm install
 cd backend
 pnpm install
 
-# complete native TensorFlow/canvas setup required for face pipeline
-chmod +x setup.sh
-./setup.sh
+# ensure Node 20 is active (required for tensorflow native modules)
+nvm install 20
+nvm use 20
+
+# rebuild native dependencies required by face-api / tfjs
+cd node_modules/.pnpm/canvas@3.2.3/node_modules/canvas
+npm rebuild --build-addon-from-source
+
+cd ../../@tensorflow+tfjs-node@4.22.0_seedrandom@3.0.5/node_modules/@tensorflow/tfjs-node
+npm rebuild --build-addon-from-source
+
+cd ../../../../..
+npm rebuild @tensorflow/tfjs-node --build-addon-from-source
 ```
 
 ### Run in Development
 
 ```bash
-# from project root (if workspace scripts are configured)
-pnpm dev
-
-# or run apps separately
-cd server && pnpm dev
-cd client && pnpm dev
+cd backend && pnpm dev
+cd backend/workers/imageWorker.js && pnpm dev
 ```
 
 ## How Face Recognition Works
