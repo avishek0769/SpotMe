@@ -115,6 +115,14 @@ const editEvent = asyncHandler(async (req, res) => {
     const { name, eventDate, accessLevel, photoId } = req.body;
     let updateData = {};
 
+    const existingEvent = await Event.findById(eventId);
+    if (!existingEvent) {
+        throw new ApiError(404, "Event not found");
+    }
+    if (existingEvent.status === "expired" || existingEvent.expiresAt <= new Date()) {
+        throw new ApiError(410, "Expired events can no longer be edited");
+    }
+
     if (name) updateData.name = name;
     if (eventDate) updateData.eventDate = new Date(eventDate).toISOString();
     if (accessLevel) {
@@ -136,6 +144,14 @@ const editEvent = asyncHandler(async (req, res) => {
 
 const uploadComplete = asyncHandler(async (req, res) => {
     const { eventId } = req.params;
+
+    const currentEvent = await Event.findById(eventId);
+    if (!currentEvent) {
+        throw new ApiError(404, "Event not found");
+    }
+    if (currentEvent.status === "expired" || currentEvent.expiresAt <= new Date()) {
+        throw new ApiError(410, "Expired events can no longer be updated");
+    }
 
     const photo = await Photo.findOne({ eventId, type: "event" });
 

@@ -27,6 +27,14 @@ const s3 = new S3Client({
 
 const getSignedUrlForEvent = asyncHandler(async (req, res) => {
     const { eventId } = req.params;
+    const event = await Event.findById(eventId).select("expiresAt status");
+
+    if (!event) {
+        throw new ApiError(404, "Event not found");
+    }
+    if (event.status === "expired" || event.expiresAt <= new Date()) {
+        throw new ApiError(410, "Expired events can no longer accept uploads");
+    }
 
     const { url, fields } = await createPresignedPost(s3, {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
