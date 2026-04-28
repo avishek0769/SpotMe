@@ -31,6 +31,18 @@ const eventSchema = new Schema({
         type: Date,
         required: true,
     },
+    expiryWarningSentAt: {
+        type: Date,
+        default: null,
+    },
+    finalWarningSentAt: {
+        type: Date,
+        default: null,
+    },
+    photosDeletedAt: {
+        type: Date,
+        default: null,
+    },
     status: {
         type: String,
         enum: ["empty", "processing", "ready", "expired"],

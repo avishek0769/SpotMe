@@ -1,9 +1,12 @@
 import "dotenv/config";
 import connectDB from "./utils/connectDB.js";
 import { app } from "./app.js";
+import { startEventExpiryScheduler } from "./utils/eventExpiryScheduler.js";
 
 connectDB()
     .then(() => {
+        startEventExpiryScheduler();
+
         app.on("error", (error) => {
             console.log("Server issue: ", error);
         });
