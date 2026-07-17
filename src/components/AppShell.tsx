@@ -1,74 +1,102 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 
 interface AppShellProps { children: ReactNode; }
 
+/* ── Sun icon ────────────────────────────────────────────────────────── */
+function SunIcon() {
+    return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+        </svg>
+    );
+}
+
+/* ── Moon icon ───────────────────────────────────────────────────────── */
+function MoonIcon() {
+    return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+    );
+}
+
 export function AppShell({ children }: AppShellProps) {
     const location = useLocation();
     const { user } = useAppContext();
     const onAuth = location.pathname === "/login" || location.pathname === "/signup";
+    const isHome = location.pathname === "/";
+
+    const [dark, setDark] = useState<boolean>(() => {
+        try { return localStorage.getItem("sm-theme") === "dark"; } catch { return false; }
+    });
+
+    useEffect(() => {
+        document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+        try { localStorage.setItem("sm-theme", dark ? "dark" : "light"); } catch { /* noop */ }
+    }, [dark]);
 
     return (
         <div style={{ minHeight: "100vh" }}>
-            <header
-                style={{
-                    position: "sticky", top: 0, zIndex: 40,
-                    borderBottom: "1px solid var(--border)",
-                    background: "rgba(9,13,20,0.85)",
-                    backdropFilter: "blur(16px)",
-                }}
-            >
-                <div
-                    style={{
-                        margin: "0 auto", display: "flex", alignItems: "center",
-                        justifyContent: "space-between", maxWidth: 1180,
-                        height: 60, padding: "0 1.25rem",
-                    }}
-                >
-                    <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
-                        <div style={{
-                            width: 28, height: 28, borderRadius: 8,
-                            background: "linear-gradient(135deg, var(--accent), var(--accent-hover))",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: 14, fontWeight: 800, color: "#fff",
-                        }}>S</div>
-                        <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.02em" }}>
-                            SpotMe
-                        </span>
+            <header className="nav-root">
+                <div className="nav-inner">
+                    {/* Logo */}
+                    <Link to="/" className="nav-logo">
+                        <div className="nav-logo-mark">S</div>
+                        <span className="nav-logo-text">SpotMe</span>
                     </Link>
 
-                    <nav style={{ display: "flex", alignItems: "center", gap: 4, fontSize: "0.8125rem" }}>
-                        <Link
-                            to="/"
-                            style={{
-                                padding: "0.4rem 0.75rem", borderRadius: 8,
-                                textDecoration: "none",
-                                color: location.pathname === "/" ? "#fff" : "var(--text-secondary)",
-                                background: location.pathname === "/" ? "var(--surface-elevated)" : "transparent",
-                            }}
-                        >Home</Link>
-                        {user ? (
-                            <Link
-                                to="/dashboard"
-                                style={{
-                                    padding: "0.4rem 0.75rem", borderRadius: 8,
-                                    textDecoration: "none",
-                                    color: (location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/events/"))
-                                        ? "#fff" : "var(--text-secondary)",
-                                    background: (location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/events/"))
-                                        ? "var(--surface-elevated)" : "transparent",
-                                }}
-                            >Dashboard</Link>
-                        ) : null}
-                        {!user && !onAuth ? (
-                            <Link to="/login" className="btn-secondary" style={{ padding: "0.4rem 0.875rem", textDecoration: "none" }}>
+                    {/* Nav links */}
+                    <nav>
+                        <ul className="nav-links">
+                            <li>
+                                <Link
+                                    to="/"
+                                    className={`nav-link${isHome ? " active" : ""}`}
+                                >
+                                    Home
+                                </Link>
+                            </li>
+                            {user && (
+                                <li>
+                                    <Link
+                                        to="/dashboard"
+                                        className={`nav-link${location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/events/") ? " active" : ""}`}
+                                    >
+                                        Dashboard
+                                    </Link>
+                                </li>
+                            )}
+                        </ul>
+                    </nav>
+
+                    {/* Actions */}
+                    <div className="nav-actions">
+                        <button
+                            className="theme-toggle"
+                            onClick={() => setDark(d => !d)}
+                            aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+                            title={dark ? "Light mode" : "Dark mode"}
+                        >
+                            {dark ? <SunIcon /> : <MoonIcon />}
+                        </button>
+
+                        {!user && !onAuth && (
+                            <Link to="/login" className="btn btn-secondary btn-sm">
                                 Log In
                             </Link>
-                        ) : null}
-                    </nav>
+                        )}
+                        {!user && !onAuth && (
+                            <Link to="/signup" className="btn btn-primary btn-sm">
+                                Get Started
+                            </Link>
+                        )}
+                    </div>
                 </div>
             </header>
+
             <main>{children}</main>
         </div>
     );
