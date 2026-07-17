@@ -8,6 +8,9 @@ import { EventManagementPage } from "./pages/EventManagementPage.tsx";
 import { GuestEventPage } from "./pages/GuestEventPage.tsx";
 import { GuestCollectionPage } from "./pages/GuestCollectionPage.tsx";
 import { LandingPage } from "./pages/LandingPage.tsx";
+import { PrivacyPage } from "./pages/PrivacyPage.tsx";
+import { TermsPage } from "./pages/TermsPage.tsx";
+import { GdprPage } from "./pages/GdprPage.tsx";
 import { NotFoundPage } from "./pages/NotFoundPage.tsx";
 
 function App() {
@@ -18,6 +21,9 @@ function App() {
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/signup" element={<AuthPage mode="signup" />} />
                     <Route path="/login" element={<AuthPage mode="login" />} />
+                    <Route path="/privacy" element={<PrivacyPage />} />
+                    <Route path="/terms" element={<TermsPage />} />
+                    <Route path="/gdpr" element={<GdprPage />} />
                     <Route
                         path="/dashboard"
                         element={

@@ -255,7 +255,12 @@ export function LandingPage() {
 
                             {/* Simulated Photo Grid */}
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px" }}>
-                                {[1, 2, 3, 4].map(idx => (
+                                {[
+                                    { src: "/hero-1.avif", alt: "Match 1" },
+                                    { src: "/hero-2.jpg", alt: "Match 2" },
+                                    { src: "/hero-3.jpg", alt: "Match 3" },
+                                    { src: "/hero-4.avif", alt: "Match 4" },
+                                ].map((img, idx) => (
                                     <div key={idx} style={{
                                         aspectRatio: "1",
                                         background: "var(--surface-2)",
@@ -278,22 +283,21 @@ export function LandingPage() {
                                             alignItems: "center",
                                             justifyContent: "center",
                                             fontSize: "8px",
-                                            fontWeight: "bold"
+                                            fontWeight: "bold",
+                                            zIndex: 2
                                         }}>
                                             ✓
                                         </div>
-                                        {/* Colored shape representing event background */}
-                                        <div style={{
-                                            width: "100%",
-                                            height: "100%",
-                                            background: `linear-gradient(135deg, var(--surface-2) 0%, var(--hairline) 100%)`,
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            color: "var(--ink-tertiary)"
-                                        }}>
-                                            <Icons.Camera />
-                                        </div>
+                                        <img 
+                                            src={img.src} 
+                                            alt={img.alt} 
+                                            style={{
+                                                width: "100%",
+                                                height: "100%",
+                                                objectFit: "cover",
+                                                display: "block"
+                                            }} 
+                                        />
                                     </div>
                                 ))}
                             </div>
@@ -380,7 +384,7 @@ export function LandingPage() {
                         </p>
                     </div>
 
-                    <div style={styles.grid}>
+                    <div className="grid-3-col">
                         
                         {/* Benefit 1 */}
                         <div className="card">
@@ -653,9 +657,9 @@ export function LandingPage() {
                     <div>
                         <h4 style={{ fontSize: "14px", fontWeight: 600, color: "var(--ink)", marginBottom: "16px" }}>Legal</h4>
                         <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: "10px", fontSize: "13px" }}>
-                            <li><a href="#" style={{ color: "var(--ink-muted)", textDecoration: "none" }}>Privacy Policy</a></li>
-                            <li><a href="#" style={{ color: "var(--ink-muted)", textDecoration: "none" }}>Terms & Services</a></li>
-                            <li><a href="#" style={{ color: "var(--ink-muted)", textDecoration: "none" }}>General Data Protection</a></li>
+                            <li><Link to="/privacy" style={{ color: "var(--ink-muted)", textDecoration: "none" }}>Privacy Policy</Link></li>
+                            <li><Link to="/terms" style={{ color: "var(--ink-muted)", textDecoration: "none" }}>Terms & Services</Link></li>
+                            <li><Link to="/gdpr" style={{ color: "var(--ink-muted)", textDecoration: "none" }}>General Data Protection</Link></li>
                         </ul>
                     </div>
 
