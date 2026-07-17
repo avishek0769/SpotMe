@@ -17,15 +17,13 @@ export function Pagination({ totalItems, pageSize = 20, currentPage, onPageChang
                     type="button"
                     onClick={() => onPageChange(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
-                    className="btn-secondary"
-                    style={{ padding: "0.4rem 0.75rem" }}
+                    className="btn btn-secondary btn-sm"
                 >Prev</button>
                 <button
                     type="button"
                     onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
-                    className="btn-primary"
-                    style={{ padding: "0.4rem 0.75rem" }}
+                    className="btn btn-primary btn-sm"
                 >Next</button>
             </div>
         </div>

@@ -2,14 +2,20 @@ import { Link } from "react-router-dom";
 
 export function NotFoundPage() {
     return (
-        <div className="page-wrap" style={{ display: "flex", minHeight: "calc(100vh - 60px)", alignItems: "center", justifyContent: "center" }}>
-            <div className="card" style={{ maxWidth: 480, padding: "3rem", textAlign: "center", width: "100%" }}>
-                <div style={{ fontSize: 48 }}>🧭</div>
-                <h1 style={{ marginTop: 12, fontSize: "1.75rem", fontWeight: 700, color: "#fff" }}>Page not found</h1>
-                <p style={{ marginTop: 8, fontSize: "0.875rem", color: "var(--text-secondary)" }}>
+        <div style={{ display: "flex", minHeight: "calc(100vh - 56px)", alignItems: "center", justifyContent: "center", background: "var(--canvas)", padding: "24px" }} className="fade-up">
+            <div className="card card-xl" style={{ maxWidth: 480, textAlign: "center", width: "100%", boxShadow: "0 4px 20px rgba(0,0,0,0.02)" }}>
+                <div style={{ color: "#ff5600", display: "flex", justifyContent: "center", marginBottom: "20px" }}>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                </div>
+                <h1 style={{ fontSize: "24px", fontWeight: 500, color: "var(--ink)", marginBottom: "8px" }}>Page not found</h1>
+                <p style={{ fontSize: "14px", color: "var(--ink-muted)", lineHeight: 1.5, marginBottom: "24px" }}>
                     The page you're looking for doesn't exist or has been moved.
                 </p>
-                <Link to="/" className="btn-primary" style={{ marginTop: 20, padding: "0.625rem 1.25rem", display: "inline-block", textDecoration: "none" }}>
+                <Link to="/" className="btn btn-primary" style={{ padding: "10px 20px" }}>
                     Go Home
                 </Link>
             </div>

@@ -23,6 +23,37 @@ async function countEventPhotosWithPagination(eventId: string) {
 
 type MatchStep = "select" | "uploading" | "uploaded" | "matching" | "results";
 
+/* ─── Custom SVG Icons ──────────────────────────────────────────────── */
+const PageIcons = {
+    Camera: () => (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+            <circle cx="12" cy="13" r="4" />
+        </svg>
+    ),
+    Image: () => (
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            <circle cx="9" cy="9" r="2" />
+            <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+        </svg>
+    ),
+    Frown: () => (
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M16 16s-1.5-2-4-2-4 2-4 2" />
+            <line x1="9" y1="9" x2="9.01" y2="9" />
+            <line x1="15" y1="9" x2="15.01" y2="9" />
+        </svg>
+    ),
+    Search: () => (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+    )
+};
+
 export function GuestEventPage() {
     const { id } = useParams<{ id: string }>();
     const { user } = useAppContext();
@@ -53,10 +84,6 @@ export function GuestEventPage() {
     // Download selection
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-    // Load event details - use verifyJWT (optional) route through getEventDetails
-    // But getEventDetails requires verifyStrictJWT... we need a non-auth route
-    // The collection/find route uses verifyJWT. For now, event details needs auth.
-    // Let's try - if user is not logged in, getEventDetails might fail.
     useEffect(() => {
         if (!id) return;
         api.getEventDetails(id)
@@ -85,7 +112,7 @@ export function GuestEventPage() {
 
     if (loading) {
         return (
-            <div className="page-wrap" style={{ display: "flex", justifyContent: "center", paddingTop: "4rem" }}>
+            <div style={{ display: "flex", minHeight: "calc(100vh - 56px)", alignItems: "center", justifyContent: "center", background: "var(--canvas)" }}>
                 <div className="spinner" />
             </div>
         );
@@ -93,28 +120,33 @@ export function GuestEventPage() {
 
     if (notFound || !event) {
         return (
-            <div className="page-wrap" style={{ textAlign: "center", paddingTop: "4rem" }}>
-                <div style={{ fontSize: 48 }}>🔒</div>
-                <h1 style={{ marginTop: 12, fontSize: "1.5rem", fontWeight: 700, color: "#fff" }}>Event not found</h1>
-                <p style={{ marginTop: 8, fontSize: "0.875rem", color: "var(--text-secondary)" }}>
-                    This event link may have expired or is invalid. {!user && (
-                        <>Try <Link to="/login" style={{ color: "var(--accent-hover)" }}>signing in</Link> first.</>
-                    )}
-                </p>
-                <Link to="/" className="btn-primary" style={{ marginTop: 20, padding: "0.625rem 1.25rem", display: "inline-block", textDecoration: "none" }}>
-                    Go Home
-                </Link>
+            <div style={{ display: "flex", minHeight: "calc(100vh - 56px)", alignItems: "center", justifyContent: "center", background: "var(--canvas)", padding: "24px" }}>
+                <div className="card card-xl" style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
+                    <div style={{ color: "#ff5600", display: "flex", justifyContent: "center", marginBottom: "20px" }}>
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                    </div>
+                    <h1 style={{ fontSize: "24px", fontWeight: 500, color: "var(--ink)", marginBottom: "8px" }}>Event not found</h1>
+                    <p style={{ fontSize: "14px", color: "var(--ink-muted)", lineHeight: 1.5, marginBottom: "24px" }}>
+                        This event link may have expired or is invalid. {!user && (
+                            <>Try <Link to="/login" style={{ color: "#ff5600", fontWeight: 500 }}>signing in</Link> first.</>
+                        )}
+                    </p>
+                    <Link to="/" className="btn btn-primary" style={{ display: "inline-flex" }}>
+                        Go Home
+                    </Link>
+                </div>
             </div>
         );
     }
 
-    // File selection handler
     function onSelfieChange(e: ChangeEvent<HTMLInputElement>) {
         const files = e.target.files;
         if (!files) return;
         const arr = Array.from(files).slice(0, 3);
         setSelfieFiles(arr);
-        // Generate previews
         const previews = arr.map((f) => URL.createObjectURL(f));
         setSelfiePreviews(previews);
         setMatchStep("select");
@@ -132,7 +164,6 @@ export function GuestEventPage() {
         setSelfiePreviews(newPreviews);
     }
 
-    // Step 2: Upload selfies to S3
     async function handleUpload() {
         if (!id || selfieFiles.length === 0) {
             setError("Select at least 1 selfie");
@@ -177,7 +208,6 @@ export function GuestEventPage() {
         }
     }
 
-    // Step 3: Find matches
     async function handleFindMatches() {
         if (!id || !selfiePhotoIds.length) return;
         setMatchStep("matching");
@@ -195,7 +225,6 @@ export function GuestEventPage() {
         }
     }
 
-    // Reset flow
     function resetFlow() {
         setSelfieFiles([]);
         selfiePreviews.forEach((p) => URL.revokeObjectURL(p));
@@ -242,214 +271,268 @@ export function GuestEventPage() {
     }
 
     const stepLabels: Record<MatchStep, string> = {
-        select: "Step 1: Select Selfies",
-        uploading: "Uploading...",
-        uploaded: "Step 2: Upload Complete — Ready to Find",
-        matching: "Finding your photos...",
-        results: "Step 3: Results",
+        select: "Step 1: Select Search Selfies",
+        uploading: "Uploading images to secure storage...",
+        uploaded: "Step 2: Upload Complete — Ready to Scan",
+        matching: "Spotting matches with AI recognition...",
+        results: "Step 3: Matches Found",
     };
 
     return (
-        <>
-            <div className="page-wrap">
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+        <div className="page-wrap fade-up" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+            
+            {/* Header context info */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16, borderBottom: "1px solid var(--hairline)", paddingBottom: "24px" }}>
                 <div>
-                    <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>{event.name}</h1>
-                    <p style={{ marginTop: 4, fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
+                    <h1 style={{ fontSize: "28px", fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.5px", margin: 0 }}>{event.name}</h1>
+                    <p style={{ marginTop: 4, fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>
                         {new Date(event.eventDate).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
                     </p>
                 </div>
-                <Link to="/" style={{ fontSize: "0.8125rem", color: "var(--accent-hover)", textDecoration: "none" }}>
-                    SpotMe Home
+                <Link to="/" style={{ fontSize: "14px", color: "#ff5600", textDecoration: "none", fontWeight: 500 }}>
+                    SpotMe Home &rarr;
                 </Link>
             </div>
 
             {!user && (
-                <div className="alert alert-info" style={{ marginTop: 12 }}>
+                <div className="alert alert-info" style={{ fontSize: "14px" }}>
                     Shared link mode: you can upload selfies and find matches without signing in.
-                    <Link to="/login" style={{ color: "var(--accent-hover)", fontWeight: 600, marginLeft: 4 }}>Sign in</Link> only if you want saved collections and downloads.
+                    <Link to="/login" style={{ color: "#ff5600", fontWeight: 600, marginLeft: 4, textDecoration: "none" }}>Sign in</Link> if you want to save your collection.
                 </div>
             )}
 
             {user && (
-                <div style={{ marginTop: 12 }}>
-                    <Link to="/dashboard" style={{ fontSize: "0.8125rem", color: "var(--accent-hover)", textDecoration: "none" }}>
-                        ← Back to Dashboard
+                <div>
+                    <Link to="/dashboard" style={{ fontSize: "14px", color: "#ff5600", textDecoration: "none", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                        &larr; Back to Dashboard
                     </Link>
                 </div>
             )}
 
+            {/* Find my photos card */}
+            <section className="card card-xl" style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.01)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: "20px" }}>
+                    <h2 style={{ fontSize: "20px", fontWeight: 500, color: "var(--ink)", margin: 0 }}>Find My Photos</h2>
+                    {matchStep !== "select" && matchStep !== "uploading" && matchStep !== "matching" && (
+                        <button onClick={resetFlow} className="btn btn-secondary btn-sm">
+                            Start Over
+                        </button>
+                    )}
+                </div>
+
+                <div style={{
+                    padding: "10px 14px", borderRadius: "var(--r-md)",
+                    background: "var(--surface-2)", border: "1px solid var(--hairline)",
+                    fontSize: "13px", fontWeight: 500, color: "#ff5600",
+                    marginBottom: "20px", display: "inline-block"
+                }}>
+                    {stepLabels[matchStep]}
+                </div>
+
+                {error && <div className="alert alert-error" style={{ marginBottom: "16px" }}>{error}</div>}
+                {message && matchStep !== "select" && <div className="alert alert-success" style={{ marginBottom: "16px" }}>{message}</div>}
+
+                {matchStep === "select" && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                        <p style={{ fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>
+                            Select 1 to 3 selfies of yourself. Our AI uses these temporarily to retrieve matches.
+                        </p>
+                        
+                        <div
+                            onClick={() => selfieRef.current?.click()}
+                            style={{
+                                display: "flex", flexDirection: "column", alignItems: "center",
+                                justifyContent: "center", gap: "12px",
+                                padding: "28px 20px",
+                                border: "2px dashed var(--hairline)",
+                                borderRadius: "var(--r-lg)",
+                                background: "var(--surface-2)",
+                                cursor: "pointer",
+                                transition: "border-color 0.15s ease, background 0.15s ease",
+                                maxWidth: "420px",
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.borderColor = "var(--ink-subtle)";
+                                e.currentTarget.style.background = "var(--surface-1)";
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.borderColor = "var(--hairline)";
+                                e.currentTarget.style.background = "var(--surface-2)";
+                            }}
+                        >
+                            <div style={{ color: "var(--ink-tertiary)" }}>
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                    <circle cx="12" cy="13" r="4" />
+                                </svg>
+                            </div>
+                            <div style={{ textAlign: "center" }}>
+                                <p style={{ fontSize: "14px", color: "var(--ink)", margin: "0 0 2px 0", fontWeight: 500 }}>
+                                    Choose selfie photos
+                                </p>
+                                <p style={{ fontSize: "12px", color: "var(--ink-muted)", margin: 0 }}>
+                                    Up to 3 images &middot; JPG, PNG, WEBP
+                                </p>
+                            </div>
+                            <input
+                                ref={selfieRef} type="file" multiple accept="image/*"
+                                onChange={onSelfieChange}
+                                style={{ display: "none" }}
+                            />
+                        </div>
+
+                        {selfiePreviews.length > 0 && (
+                            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                                {selfiePreviews.map((preview, i) => (
+                                    <div key={i} style={{ position: "relative", borderRadius: "var(--r-md)", overflow: "hidden", border: "1px solid var(--hairline)", width: "100px", height: "100px" }}>
+                                        <img src={preview} alt={`Selfie ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                        <button
+                                            type="button" onClick={() => removeSelfie(i)}
+                                            style={{
+                                                position: "absolute", top: 4, right: 4, width: 20, height: 20,
+                                                borderRadius: "50%", background: "rgba(196,28,28,0.95)", border: "none",
+                                                color: "#fff", fontSize: 10, cursor: "pointer",
+                                                display: "flex", alignItems: "center", justifyContent: "center",
+                                            }}
+                                        >✕</button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <button
+                            onClick={handleUpload}
+                            disabled={selfieFiles.length === 0}
+                            className="btn btn-primary"
+                            style={{ alignSelf: "flex-start" }}
+                        >
+                            Upload {selfieFiles.length} Selfie(s)
+                        </button>
+                    </div>
+                )}
+
+                {matchStep === "uploading" && (
+                    <div style={{ textAlign: "center", padding: "40px 0" }}>
+                        <div className="spinner" style={{ margin: "0 auto 16px" }} />
+                        <p style={{ fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>
+                            Uploading search files securely...
+                        </p>
+                    </div>
+                )}
+
+                {matchStep === "uploaded" && (
+                    <div>
+                        <p style={{ fontSize: "14px", color: "var(--ink-muted)", marginBottom: "20px" }}>
+                            {uploadedUrls.length} search selfie(s) prepared. Ready to scan.
+                        </p>
+                        <button onClick={handleFindMatches} className="btn btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                            <PageIcons.Search /> Scan Gallery
+                        </button>
+                    </div>
+                )}
+
+                {matchStep === "matching" && (
+                    <div style={{ textAlign: "center", padding: "40px 0" }}>
+                        <div className="spinner" style={{ margin: "0 auto 16px" }} />
+                        <p style={{ fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>
+                            Matching faces with vector indexing...
+                        </p>
+                    </div>
+                )}
+
+                {matchStep === "results" && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                        {matchedPhotos.length > 0 && (
+                            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                                <button onClick={handleDownloadAll} className="btn btn-primary btn-sm">
+                                    Download All ({matchedPhotos.length})
+                                </button>
+                                <button onClick={handleDownloadSelected} disabled={!selectedIds.length || !user} className="btn btn-secondary btn-sm">
+                                    Download Selected ({selectedIds.length})
+                                </button>
+                            </div>
+                        )}
+
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12 }}>
+                            {pagedMyPhotos.map((p) => {
+                                const sel = selectedIds.includes(p._id);
+                                return (
+                                    <div key={p._id} className="photo-tile" style={{ padding: 4, cursor: "pointer", border: sel ? "2px solid var(--accent)" : "1px solid var(--hairline)" }}
+                                        onClick={() => toggleSelect(p._id)}
+                                    >
+                                        <img src={p.url} alt="" style={{ borderRadius: "var(--r-sm)", height: 110, width: "100%", objectFit: "cover" }} />
+                                        <div style={{ padding: "6px 4px 2px", fontSize: "12px", color: "var(--ink-muted)", display: "flex", alignItems: "center", gap: 6 }}>
+                                            <input type="checkbox" checked={sel} readOnly />
+                                            <span>Select</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {matchedPhotos.length === 0 && (
+                            <div style={{ textAlign: "center", padding: "32px 0", color: "var(--ink-tertiary)" }}>
+                                <div style={{ display: "flex", justifyContent: "center", marginBottom: "12px" }}>
+                                    <PageIcons.Frown />
+                                </div>
+                                <p style={{ fontSize: "16px", fontWeight: 500, color: "var(--ink)", margin: "0 0 4px 0" }}>No matches found</p>
+                                <p style={{ fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>Try uploading a clearer selfie in direct light.</p>
+                            </div>
+                        )}
+
+                        <Pagination totalItems={matchedPhotos.length} currentPage={myPhotosPage} pageSize={PAGE_SIZE} onPageChange={setMyPhotosPage} />
+
+                        {!user && matchedPhotos.length > 0 && (
+                            <div className="alert alert-info" style={{ marginTop: 8 }}>
+                                <Link to="/login" style={{ color: "#ff5600", fontWeight: 600, textDecoration: "none" }}>Sign in</Link> to save these photos into a personal dashboard collection.
+                            </div>
+                        )}
+                    </div>
+                )}
+            </section>
+
+            {/* All photos browse section (if event is browseable) */}
             {event.accessLevel === "browse" && (
-                <section className="card" style={{ marginTop: 20, padding: "1.25rem" }}>
-                    <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "#fff" }}>All Event Photos</h2>
-                    <p style={{ marginTop: 2, fontSize: "0.75rem", color: "var(--text-secondary)" }}>
-                        {browseTotal > 0 ? `${browseTotal} photos` : "Loading..."}
+                <section className="card" style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.01)" }}>
+                    <h2 style={{ fontSize: "20px", fontWeight: 500, color: "var(--ink)", margin: "0 0 4px 0" }}>All Event Photos</h2>
+                    <p style={{ fontSize: "13px", color: "var(--ink-muted)", margin: "0 0 20px 0" }}>
+                        {browseTotal > 0 ? `${browseTotal} photos available` : "Loading..."}
                     </p>
-                    <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8 }}>
+                    
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 12 }}>
                         {browsePhotos.map((p) => (
                             <div key={p._id} className="photo-tile" style={{ padding: 4 }}>
-                                <img src={p.url} alt="" style={{ borderRadius: 6, height: 100 }} />
+                                <img src={p.url} alt="" style={{ borderRadius: "var(--r-sm)", height: 110, width: "100%", objectFit: "cover" }} />
                             </div>
                         ))}
                     </div>
+
                     {browsePhotos.length === 0 && (
-                        <div style={{ textAlign: "center", padding: "1.5rem", color: "var(--text-secondary)" }}>
-                            <span style={{ fontSize: 32 }}>🖼️</span>
-                            <p style={{ marginTop: 6, fontSize: "0.8125rem" }}>No photos yet</p>
+                        <div style={{ textAlign: "center", padding: "32px 0", color: "var(--ink-tertiary)" }}>
+                            <div style={{ display: "flex", justifyContent: "center", marginBottom: "12px" }}>
+                                <PageIcons.Image />
+                            </div>
+                            <p style={{ fontSize: "15px", color: "var(--ink-muted)", margin: 0 }}>No photos uploaded yet</p>
                         </div>
                     )}
+
                     <Pagination totalItems={browseTotal} currentPage={browsePage} pageSize={PAGE_SIZE} onPageChange={setBrowsePage} />
                 </section>
             )}
 
-            <section className="card" style={{ marginTop: 20, padding: "1.25rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-                        <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "#fff" }}>Find My Photos</h2>
-                        {matchStep !== "select" && matchStep !== "uploading" && matchStep !== "matching" && (
-                            <button onClick={resetFlow} className="btn-secondary" style={{ padding: "0.3rem 0.75rem", fontSize: "0.75rem" }}>
-                                Start Over
-                            </button>
-                        )}
-                    </div>
-
-                    <div style={{
-                        marginTop: 12, padding: "0.5rem 0.875rem", borderRadius: 8,
-                        background: "var(--bg-soft)", border: "1px solid var(--border)",
-                        fontSize: "0.8125rem", fontWeight: 500, color: "var(--accent-hover)",
-                    }}>
-                        {stepLabels[matchStep]}
-                    </div>
-
-                    {error && <div className="alert alert-error" style={{ marginTop: 10 }}>{error}</div>}
-                    {message && matchStep !== "select" && <div className="alert alert-success" style={{ marginTop: 10 }}>{message}</div>}
-
-                    {(matchStep === "select") && (
-                        <div style={{ marginTop: 16 }}>
-                            <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginBottom: 10 }}>
-                                Select 1-3 selfie photos for face matching
-                            </p>
-                            <input ref={selfieRef} type="file" multiple accept="image/*" onChange={onSelfieChange} className="ui-input" style={{ maxWidth: 400 }} />
-
-                            {selfiePreviews.length > 0 && (
-                                <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
-                                    {selfiePreviews.map((preview, i) => (
-                                        <div key={i} style={{ position: "relative", borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)" }}>
-                                            <img src={preview} alt={`Selfie ${i + 1}`} style={{ width: 100, height: 100, objectFit: "cover" }} />
-                                            <button
-                                                type="button" onClick={() => removeSelfie(i)}
-                                                style={{
-                                                    position: "absolute", top: 4, right: 4, width: 22, height: 22,
-                                                    borderRadius: "50%", background: "rgba(239,68,68,0.9)", border: "none",
-                                                    color: "#fff", fontSize: 11, cursor: "pointer",
-                                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                                }}
-                                            >✕</button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            <button
-                                onClick={handleUpload}
-                                disabled={selfieFiles.length === 0}
-                                className="btn-primary"
-                                style={{ marginTop: 16, padding: "0.5rem 1.25rem" }}
-                            >
-                                Upload {selfieFiles.length} Selfie(s)
-                            </button>
-                        </div>
-                    )}
-
-                    {matchStep === "uploading" && (
-                        <div style={{ marginTop: 20, textAlign: "center", padding: "2rem" }}>
-                            <div className="spinner" style={{ margin: "0 auto", width: 32, height: 32 }} />
-                            <p style={{ marginTop: 12, fontSize: "0.875rem", color: "var(--text-secondary)" }}>
-                                Uploading selfies...
-                            </p>
-                        </div>
-                    )}
-
-                    {matchStep === "uploaded" && (
-                        <div style={{ marginTop: 16 }}>
-                            <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
-                                {uploadedUrls.length} selfie(s) uploaded. Click below to run face matching against event photos.
-                            </p>
-                            <button onClick={handleFindMatches} className="btn-primary" style={{ marginTop: 12, padding: "0.625rem 1.5rem" }}>
-                                🔍 Find My Photos
-                            </button>
-                        </div>
-                    )}
-
-                    {matchStep === "matching" && (
-                        <div style={{ marginTop: 20, textAlign: "center", padding: "2rem" }}>
-                            <div className="spinner" style={{ margin: "0 auto", width: 32, height: 32 }} />
-                            <p style={{ marginTop: 12, fontSize: "0.875rem", color: "var(--text-secondary)" }}>
-                                Running AI face matching...
-                            </p>
-                        </div>
-                    )}
-
-                    {matchStep === "results" && (
-                        <div style={{ marginTop: 16 }}>
-                            {matchedPhotos.length > 0 && (
-                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-                                    <button onClick={handleDownloadAll} className="btn-primary" style={{ padding: "0.4rem 0.875rem" }}>
-                                        Download All ({matchedPhotos.length})
-                                    </button>
-                                    <button onClick={handleDownloadSelected} disabled={!selectedIds.length || !user} className="btn-secondary" style={{ padding: "0.4rem 0.875rem" }}>
-                                        Download Selected ({selectedIds.length})
-                                    </button>
-                                </div>
-                            )}
-
-                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8 }}>
-                                {pagedMyPhotos.map((p) => {
-                                    const sel = selectedIds.includes(p._id);
-                                    return (
-                                        <div key={p._id} className="photo-tile" style={{ padding: 4, cursor: "pointer", border: sel ? "2px solid var(--accent)" : undefined }}
-                                            onClick={() => toggleSelect(p._id)}
-                                        >
-                                            <img src={p.url} alt="" style={{ borderRadius: 6, height: 100 }} />
-                                            <div style={{ padding: "4px 6px", fontSize: "0.6875rem", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 4 }}>
-                                                <input type="checkbox" checked={sel} readOnly />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-
-                            {matchedPhotos.length === 0 && (
-                                <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-secondary)" }}>
-                                    <div style={{ fontSize: 40 }}>😔</div>
-                                    <p style={{ marginTop: 8, fontWeight: 500 }}>No matches found</p>
-                                    <p style={{ fontSize: "0.8125rem" }}>Try with a clearer selfie photo</p>
-                                </div>
-                            )}
-
-                            <Pagination totalItems={matchedPhotos.length} currentPage={myPhotosPage} pageSize={PAGE_SIZE} onPageChange={setMyPhotosPage} />
-
-                            {!user && matchedPhotos.length > 0 && (
-                                <div className="alert alert-info" style={{ marginTop: 10 }}>
-                                    <Link to="/login" style={{ color: "var(--accent-hover)", fontWeight: 600 }}>Sign in</Link> to save these matches and download photos.
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </section>
-
-            </div>
-
+            {/* Download Toast notification */}
             {downloadToast && (
-            <div style={{
-                position: "fixed", right: 16, bottom: 16, zIndex: 70,
-                padding: "0.55rem 0.8rem", borderRadius: 10,
-                border: "1px solid rgba(16,185,129,0.3)",
-                background: "rgba(16,185,129,0.12)", color: "#6ee7b7",
-                fontSize: "0.75rem", fontWeight: 600,
-            }}>
-                {downloadToast}
-            </div>
-        )}
-        </>
+                <div style={{
+                    position: "fixed", right: 24, bottom: 24, zIndex: 70,
+                    padding: "10px 16px", borderRadius: "var(--r-md)",
+                    border: "1px solid rgba(11,223,80,0.25)",
+                    background: "rgba(11,223,80,0.08)", color: "#0a8a32",
+                    fontSize: "13px", fontWeight: 500,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
+                }}>
+                    {downloadToast}
+                </div>
+            )}
+        </div>
     );
 }

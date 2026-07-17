@@ -1,10 +1,10 @@
 import { type ReactNode, useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 
 interface AppShellProps { children: ReactNode; }
 
-/* ── Sun icon ────────────────────────────────────────────────────────── */
+/* ── Sun icon ─────────────────────────────────────────────────────────── */
 function SunIcon() {
     return (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -14,7 +14,7 @@ function SunIcon() {
     );
 }
 
-/* ── Moon icon ───────────────────────────────────────────────────────── */
+/* ── Moon icon ────────────────────────────────────────────────────────── */
 function MoonIcon() {
     return (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -25,9 +25,15 @@ function MoonIcon() {
 
 export function AppShell({ children }: AppShellProps) {
     const location = useLocation();
-    const { user } = useAppContext();
+    const navigate = useNavigate();
+    const { user, logout } = useAppContext();
     const onAuth = location.pathname === "/login" || location.pathname === "/signup";
     const isHome = location.pathname === "/";
+    const isDashboardArea = location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/events/");
+
+    async function handleLogout() {
+        try { await logout(); navigate("/login"); } catch { /* ignore */ }
+    }
 
     const [dark, setDark] = useState<boolean>(() => {
         try { return localStorage.getItem("sm-theme") === "dark"; } catch { return false; }
@@ -37,6 +43,12 @@ export function AppShell({ children }: AppShellProps) {
         document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
         try { localStorage.setItem("sm-theme", dark ? "dark" : "light"); } catch { /* noop */ }
     }, [dark]);
+
+    // Derive initials for user avatar
+    const userInitial = (user?.fullname || user?.username || user?.email || "?")
+        .trim()
+        .charAt(0)
+        .toUpperCase();
 
     return (
         <div style={{ minHeight: "100vh" }}>
@@ -63,7 +75,7 @@ export function AppShell({ children }: AppShellProps) {
                                 <li>
                                     <Link
                                         to="/dashboard"
-                                        className={`nav-link${location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/events/") ? " active" : ""}`}
+                                        className={`nav-link${isDashboardArea ? " active" : ""}`}
                                     >
                                         Dashboard
                                     </Link>
@@ -83,6 +95,47 @@ export function AppShell({ children }: AppShellProps) {
                             {dark ? <SunIcon /> : <MoonIcon />}
                         </button>
 
+                        {/* Logged-in user avatar pill + logout */}
+                        {user && (
+                            <>
+                                <Link
+                                    to="/dashboard"
+                                    title={user.fullname || user.username || user.email}
+                                    style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "8px" }}
+                                >
+                                    <span style={{
+                                        width: 30, height: 30,
+                                        borderRadius: "50%",
+                                        background: "var(--ink)",
+                                        color: "var(--accent-on)",
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                        fontSize: "13px", fontWeight: 600,
+                                        flexShrink: 0,
+                                        transition: "opacity 0.15s",
+                                    }}
+                                        onMouseEnter={e => e.currentTarget.style.opacity = "0.75"}
+                                        onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+                                    >
+                                        {userInitial}
+                                    </span>
+                                    <span style={{
+                                        fontSize: "13px", color: "var(--ink-muted)", fontWeight: 500,
+                                        maxWidth: "90px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
+                                    }}>
+                                        {user.fullname || user.username}
+                                    </span>
+                                </Link>
+                                <button
+                                    onClick={handleLogout}
+                                    className="btn btn-secondary btn-sm"
+                                    style={{ flexShrink: 0 }}
+                                >
+                                    Log Out
+                                </button>
+                            </>
+                        )}
+
+                        {/* Guest CTA buttons */}
                         {!user && !onAuth && (
                             <Link to="/login" className="btn btn-secondary btn-sm">
                                 Log In

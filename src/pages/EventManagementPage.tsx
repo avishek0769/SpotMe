@@ -13,6 +13,55 @@ type ConfirmDialog = {
     confirmLabel: string;
 };
 
+/* ─── Custom SVG Icons ──────────────────────────────────────────────── */
+const MgrIcons = {
+    Camera: () => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+            <circle cx="12" cy="13" r="4" />
+        </svg>
+    ),
+    Settings: () => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+    ),
+    Users: () => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+    ),
+    Image: () => (
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            <circle cx="9" cy="9" r="2" />
+            <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+        </svg>
+    ),
+    Upload: () => (
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+    ),
+    Check: () => (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+        </svg>
+    ),
+    Link: () => (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+        </svg>
+    )
+};
+
 function formatDate(d: string) {
     return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
@@ -130,7 +179,7 @@ export function EventManagementPage() {
 
     if (loading) {
         return (
-            <div className="page-wrap" style={{ display: "flex", justifyContent: "center", paddingTop: "4rem" }}>
+            <div style={{ display: "flex", minHeight: "calc(100vh - 56px)", alignItems: "center", justifyContent: "center", background: "var(--canvas)" }}>
                 <div className="spinner" />
             </div>
         );
@@ -138,7 +187,6 @@ export function EventManagementPage() {
 
     if (notFound || !event) return <Navigate to="/dashboard" replace />;
 
-    //  Upload handler 
     async function handleFiles(files: FileList | null) {
         if (!files?.length || !id) return;
         const fileArr = Array.from(files);
@@ -172,7 +220,6 @@ export function EventManagementPage() {
         handleFiles(e.dataTransfer.files);
     }
 
-    //  Photo selection 
     function togglePhoto(photo: PhotoData) {
         setSelectedPhotos((prev) =>
             prev.find((p) => p._id === photo._id)
@@ -211,7 +258,6 @@ export function EventManagementPage() {
         window.setTimeout(() => setDownloadToast(""), 1800);
     }
 
-    //  Guest collection 
     async function loadGuestCollection(guest: GuestData) {
         if (expandedGuest?._id === guest._id) {
             setExpandedGuest(null);
@@ -276,7 +322,6 @@ export function EventManagementPage() {
             setAddPhotoSelections([]);
             setSuccess("Photos added to collection");
             setTimeout(() => setSuccess(""), 3000);
-            // Reload collection
             if (guestCollectionId) {
                 const res = await api.getCollectionPhotos(guestCollectionId, guestCollectionPage - 1, PAGE_SIZE);
                 if (res.data.length > 0 && Array.isArray(res.data[0].myPhotos)) {
@@ -330,7 +375,6 @@ export function EventManagementPage() {
         }
     }
 
-    //  Settings 
     async function saveSettings() {
         if (!id) return;
         setSettingsSaving(true);
@@ -374,7 +418,6 @@ export function EventManagementPage() {
         setTimeout(() => setCopiedLink(false), 1500);
     }
 
-    //  Access level update 
     async function handleAccessChange(level: "spot" | "browse") {
         if (!id) return;
         try {
@@ -389,61 +432,68 @@ export function EventManagementPage() {
     const tabs: { key: Tab; label: string }[] = [
         { key: "photos", label: "Photos" },
         { key: "guests", label: "Guests" },
-        { key: "access", label: "Access" },
+        { key: "access", label: "Access Control" },
         { key: "settings", label: "Settings" },
     ];
 
     return (
         <>
-            <div className="page-wrap">
+        <div className="page-wrap fade-up" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
             
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <Link to="/dashboard" style={{ fontSize: "0.8125rem", color: "var(--accent-hover)", textDecoration: "none" }}>
-                    ← Dashboard
+            {/* Header section with back navigation */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
+                <Link to="/dashboard" style={{ fontSize: "14px", color: "#ff5600", textDecoration: "none", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                    &larr; Back to Dashboard
                 </Link>
                 <span style={{
-                    fontSize: "0.6875rem", padding: "0.25rem 0.75rem", borderRadius: 999,
-                    border: "1px solid var(--border)", color: "var(--text-secondary)",
+                    fontSize: "12px", padding: "4px 10px", borderRadius: "999px",
+                    border: "1px solid var(--hairline)", color: "var(--ink-muted)", background: "var(--surface-2)"
                 }}>
-                    {event._id.slice(-8)}
+                    ID: {event._id.slice(-8).toUpperCase()}
                 </span>
             </div>
 
-            <div className="card" style={{ padding: "1.5rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
+            {/* Event Summary Card */}
+            <div className="card card-xl" style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.01)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap", borderBottom: "1px solid var(--hairline)", paddingBottom: "20px", marginBottom: "20px" }}>
                     <div>
-                        <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>{event.name}</h1>
-                        <p style={{ marginTop: 4, fontSize: "0.8125rem", color: "var(--text-secondary)" }}>{formatDate(event.eventDate)}</p>
+                        <h1 style={{ fontSize: "28px", fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.5px", margin: 0 }}>{event.name}</h1>
+                        <p style={{ marginTop: 6, fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>{formatDate(event.eventDate)}</p>
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
-                        <span className={`status-pill status-${event.accessLevel}`}>
+                        <span className="status-pill status-ready">
                             {event.accessLevel === "spot" ? "Spot Only" : "Browse & Spot"}
                         </span>
-                        <span className={`status-pill status-${event.status}`}>{event.status}</span>
+                        <span className="status-pill status-processing">{event.status}</span>
                     </div>
                 </div>
-                <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10 }}>
-                    <div className="stat-card">
-                        <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)" }}>Photos</p>
-                        <p style={{ marginTop: 2, fontSize: "1.25rem", fontWeight: 700, color: "#fff" }}>{totalPhotos}</p>
+                
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 16 }}>
+                    <div className="stat-card" style={{ background: "var(--canvas)", border: "1px solid var(--hairline-soft)" }}>
+                        <p style={{ fontSize: "11px", color: "var(--ink-muted)", margin: 0 }}>Photos</p>
+                        <p style={{ marginTop: 4, fontSize: "22px", fontWeight: 600, color: "var(--ink)", margin: 0 }}>{totalPhotos}</p>
                     </div>
-                    <div className="stat-card">
-                        <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)" }}>Guests</p>
-                        <p style={{ marginTop: 2, fontSize: "1.25rem", fontWeight: 700, color: "#fff" }}>{guests.length}</p>
+                    <div className="stat-card" style={{ background: "var(--canvas)", border: "1px solid var(--hairline-soft)" }}>
+                        <p style={{ fontSize: "11px", color: "var(--ink-muted)", margin: 0 }}>Registered Guests</p>
+                        <p style={{ marginTop: 4, fontSize: "22px", fontWeight: 600, color: "var(--ink)", margin: 0 }}>{guests.length}</p>
                     </div>
-                    <div className="stat-card">
-                        <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)" }}>Expires</p>
-                        <p style={{ marginTop: 2, fontSize: "0.875rem", fontWeight: 600, color: "#fff" }}>{formatDate(event.expiresAt)}</p>
+                    <div className="stat-card" style={{ background: "var(--canvas)", border: "1px solid var(--hairline-soft)" }}>
+                        <p style={{ fontSize: "11px", color: "var(--ink-muted)", margin: 0 }}>Expires On</p>
+                        <p style={{ marginTop: 6, fontSize: "14px", fontWeight: 500, color: "var(--ink)", margin: 0 }}>{formatDate(event.expiresAt)}</p>
                     </div>
                 </div>
             </div>
 
-            
-            {error && <div className="alert alert-error" style={{ marginTop: 12 }}>{error} <button onClick={() => setError("")} style={{ float: "right", background: "none", border: "none", color: "inherit", cursor: "pointer" }}>✕</button></div>}
-            {success && <div className="alert alert-success" style={{ marginTop: 12 }}>{success}</div>}
+            {error && (
+                <div className="alert alert-error" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span>{error}</span>
+                    <button onClick={() => setError("")} style={{ background: "none", border: "none", color: "inherit", cursor: "pointer", fontSize: "16px" }}>✕</button>
+                </div>
+            )}
+            {success && <div className="alert alert-success">{success}</div>}
 
-            
-            <div style={{ marginTop: 16, overflowX: "auto" }}>
+            {/* Tab Navigation */}
+            <div>
                 <div className="tab-bar">
                     {tabs.map((t) => (
                         <button
@@ -455,70 +505,76 @@ export function EventManagementPage() {
                 </div>
             </div>
 
+            {/* Photos Tab */}
             {activeTab === "photos" && (
-                <section className="card" style={{ marginTop: 16, padding: "1.5rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-                        <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#fff" }}>Event Photos</h2>
+                <section className="card card-xl" style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.01)" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: "20px" }}>
+                        <h2 style={{ fontSize: "20px", fontWeight: 500, color: "var(--ink)", margin: 0 }}>Event Gallery</h2>
                         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                             {photos.length > 0 && (
-                                <button onClick={handleDownloadAllPhotos} className="btn-secondary" style={{ padding: "0.4rem 0.875rem" }}>
+                                <button onClick={handleDownloadAllPhotos} className="btn btn-secondary btn-sm">
                                     Download All
                                 </button>
                             )}
                             {selectedPhotos.length > 0 && (
-                                <button onClick={handleDownloadSelectedPhotos} className="btn-secondary" style={{ padding: "0.4rem 0.875rem" }}>
-                                    Download {selectedPhotos.length}
+                                <button onClick={handleDownloadSelectedPhotos} className="btn btn-secondary btn-sm">
+                                    Download Selected ({selectedPhotos.length})
                                 </button>
                             )}
                             {selectedPhotos.length > 0 && (
-                                <button onClick={handleDeleteSelected} className="btn-danger" style={{ padding: "0.4rem 0.875rem" }}>
-                                    Delete {selectedPhotos.length}
+                                <button onClick={handleDeleteSelected} className="btn btn-sm" style={{ background: "#be123c", color: "#fff", border: "1px solid #9f1239" }}>
+                                    Delete Selected ({selectedPhotos.length})
                                 </button>
                             )}
                         </div>
                     </div>
 
-                    
+                    {/* Drag and Drop Zone */}
                     <div
                         onDrop={onDrop} onDragOver={(e) => e.preventDefault()}
                         style={{
-                            marginTop: 16, padding: "2rem", borderRadius: 12,
-                            border: "2px dashed var(--border)", background: "var(--bg)",
+                            padding: "32px 16px", borderRadius: "var(--r-lg)",
+                            border: "2px dashed var(--hairline)", background: "var(--surface-2)",
                             textAlign: "center", cursor: "pointer",
-                            transition: "border-color 0.2s",
+                            transition: "border-color 0.15s ease",
+                            marginBottom: "24px"
                         }}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = "var(--ink-subtle)"}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = "var(--hairline)"}
                         onClick={() => uploadRef.current?.click()}
                     >
-                        <div style={{ fontSize: 32 }}>📁</div>
-                        <p style={{ marginTop: 8, fontSize: "0.875rem", color: "var(--text)" }}>
-                            Drag & drop photos or <span style={{ color: "var(--accent-hover)", textDecoration: "underline" }}>browse</span>
+                        <div style={{ color: "var(--ink-tertiary)", display: "flex", justifyContent: "center", marginBottom: "12px" }}>
+                            <MgrIcons.Upload />
+                        </div>
+                        <p style={{ fontSize: "14px", color: "var(--ink)", margin: "0 0 4px 0" }}>
+                            Drag and drop photo files or <span style={{ color: "#ff5600", fontWeight: 500, textDecoration: "underline" }}>browse files</span>
                         </p>
-                        <p style={{ marginTop: 4, fontSize: "0.75rem", color: "var(--text-secondary)" }}>
-                            Files are uploaded in batches of 5 and auto-indexed
+                        <p style={{ fontSize: "12px", color: "var(--ink-muted)", margin: 0 }}>
+                            Photos are indexed automatically. Large batches are uploaded in background threads.
                         </p>
                         <input ref={uploadRef} type="file" multiple accept="image/*" onChange={onFileChange} style={{ display: "none" }} />
                     </div>
 
-                    
+                    {/* Upload progress state */}
                     {uploadPhase === "uploading" && (
-                        <div style={{ marginTop: 12 }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
-                                <span>Uploading {uploadProgress.uploaded} / {uploadProgress.total}</span>
+                        <div style={{ marginBottom: "20px", padding: "12px", borderRadius: "var(--r-md)", background: "var(--surface-2)", border: "1px solid var(--hairline)" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", color: "var(--ink-muted)", marginBottom: "6px" }}>
+                                <span>Uploading {uploadProgress.uploaded} of {uploadProgress.total} photos</span>
                                 <span>{Math.round((uploadProgress.uploaded / uploadProgress.total) * 100)}%</span>
                             </div>
-                            <div className="progress-bar" style={{ marginTop: 6 }}>
-                                <div className="progress-bar-fill" style={{ width: `${(uploadProgress.uploaded / uploadProgress.total) * 100}%` }} />
+                            <div className="progress-bar" style={{ height: "6px", background: "var(--hairline)", borderRadius: "3px", overflow: "hidden" }}>
+                                <div className="progress-bar-fill" style={{ width: `${(uploadProgress.uploaded / uploadProgress.total) * 100}%`, background: "#ff5600", height: "100%" }} />
                             </div>
                         </div>
                     )}
                     {uploadPhase === "done" && (
-                        <div className="alert alert-success" style={{ marginTop: 12 }}>
-                            ✓ All photos uploaded and queued for indexing
+                        <div className="alert alert-success" style={{ marginBottom: "20px" }}>
+                            ✓ Photos successfully loaded and queued in face indexing pipeline
                         </div>
                     )}
 
-                    
-                    <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
+                    {/* Photos grid list */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 12 }}>
                         {photos.map((photo) => {
                             const isSelected = selectedPhotos.some((p) => p._id === photo._id);
                             return (
@@ -526,13 +582,13 @@ export function EventManagementPage() {
                                     key={photo._id}
                                     className="photo-tile"
                                     style={{
-                                        padding: 6, cursor: "pointer",
-                                        border: isSelected ? "2px solid var(--accent)" : undefined,
+                                        padding: 4, cursor: "pointer",
+                                        border: isSelected ? "2px solid var(--accent)" : "1px solid var(--hairline)",
                                     }}
                                     onClick={() => togglePhoto(photo)}
                                 >
-                                    <img src={photo.url} alt="" style={{ borderRadius: 8 }} />
-                                    <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 6, fontSize: "0.6875rem", color: "var(--text-secondary)" }}>
+                                    <img src={photo.url} alt="" style={{ borderRadius: "var(--r-sm)", height: 110, width: "100%", objectFit: "cover" }} />
+                                    <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 6, fontSize: "11px", color: "var(--ink-muted)" }}>
                                         <input type="checkbox" checked={isSelected} readOnly />
                                         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                             {getFileName(photo.url).slice(0, 12)}
@@ -544,59 +600,63 @@ export function EventManagementPage() {
                     </div>
 
                     {photos.length === 0 && (
-                        <div style={{ marginTop: 20, textAlign: "center", padding: "2rem", color: "var(--text-secondary)" }}>
-                            <div style={{ fontSize: 40 }}>🖼️</div>
-                            <p style={{ marginTop: 8, fontWeight: 500 }}>No photos uploaded yet</p>
-                            <p style={{ fontSize: "0.8125rem" }}>Upload event photos to start AI face indexing</p>
+                        <div style={{ textAlign: "center", padding: "40px 12px", color: "var(--ink-tertiary)" }}>
+                            <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
+                                <MgrIcons.Image />
+                            </div>
+                            <h3 style={{ fontSize: "16px", fontWeight: 500, color: "var(--ink)", margin: "0 0 4px 0" }}>No photos uploaded yet</h3>
+                            <p style={{ fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>Add images above to run biometric scanning.</p>
                         </div>
                     )}
 
                     <Pagination totalItems={totalPhotos} currentPage={photoPage} pageSize={PAGE_SIZE} onPageChange={setPhotoPage} />
                 </section>
             )}
- 
+
+            {/* Guests Tab */}
             {activeTab === "guests" && (
-                <section className="card" style={{ marginTop: 16, padding: "1.5rem" }}>
-                    <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#fff" }}>Guest Activity</h2>
-                    <p style={{ marginTop: 4, fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
-                        Guests who accessed the event via the shared link
+                <section className="card card-xl" style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.01)" }}>
+                    <h2 style={{ fontSize: "20px", fontWeight: 500, color: "var(--ink)", margin: "0 0 4px 0" }}>Guest Activity</h2>
+                    <p style={{ fontSize: "14px", color: "var(--ink-muted)", margin: "0 0 24px 0" }}>
+                        Guests who have accessed matching records on this event.
                     </p>
 
                     {guests.length === 0 ? (
-                        <div style={{ marginTop: 20, textAlign: "center", padding: "2rem", color: "var(--text-secondary)" }}>
-                            <div style={{ fontSize: 40 }}>👥</div>
-                            <p style={{ marginTop: 8, fontWeight: 500 }}>No guest activity yet</p>
-                            <p style={{ fontSize: "0.8125rem" }}>Share your event link to start receiving guests</p>
+                        <div style={{ textAlign: "center", padding: "40px 12px", color: "var(--ink-tertiary)" }}>
+                            <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
+                                <MgrIcons.Users />
+                            </div>
+                            <h3 style={{ fontSize: "16px", fontWeight: 500, color: "var(--ink)", margin: "0 0 4px 0" }}>No guest activity yet</h3>
+                            <p style={{ fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>Guests will appear here once they search using the sharable link.</p>
                         </div>
                     ) : (
-                        <div style={{ marginTop: 16, overflowX: "auto" }}>
-                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8125rem" }}>
+                        <div style={{ overflowX: "auto" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
                                 <thead>
-                                    <tr style={{ borderBottom: "1px solid var(--border)", color: "var(--text-secondary)", textAlign: "left" }}>
-                                        <th style={{ padding: "0.75rem" }}>Guest</th>
-                                        <th style={{ padding: "0.75rem" }}>Last Accessed</th>
-                                        <th style={{ padding: "0.75rem" }}>Actions</th>
+                                    <tr style={{ borderBottom: "1px solid var(--hairline)", color: "var(--ink-muted)", textAlign: "left" }}>
+                                        <th style={{ padding: "12px 8px" }}>Guest Account</th>
+                                        <th style={{ padding: "12px 8px" }}>Last Visited</th>
+                                        <th style={{ padding: "12px 8px" }}>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {guests.map((guest) => (
-                                        <tr key={guest._id} style={{ borderBottom: "1px solid var(--border)" }}>
-                                            <td style={{ padding: "0.75rem", color: "#fff" }}>
-                                                {guest.user?.fullname || guest.userId?.slice(-8) || "Anonymous"}
+                                        <tr key={guest._id} style={{ borderBottom: "1px solid var(--hairline-soft)" }}>
+                                            <td style={{ padding: "14px 8px", color: "var(--ink)", fontWeight: 500 }}>
+                                                {guest.user?.fullname || guest.userId?.slice(-8).toUpperCase() || "Anonymous Guest"}
                                             </td>
-                                            <td style={{ padding: "0.75rem", color: "var(--text-secondary)" }}>
+                                            <td style={{ padding: "14px 8px", color: "var(--ink-muted)" }}>
                                                 {new Date(guest.accessedAt).toLocaleString()}
                                             </td>
-                                            <td style={{ padding: "0.75rem" }}>
+                                            <td style={{ padding: "14px 8px" }}>
                                                 <button
-                                                    className="btn-secondary"
-                                                    style={{ padding: "0.3rem 0.625rem", fontSize: "0.75rem" }}
+                                                    className="btn btn-secondary btn-sm"
                                                     onClick={() => loadGuestCollection(guest)}
                                                     disabled={!guest.userId}
                                                 >
                                                     {!guest.userId
                                                         ? "No Account"
-                                                        : (expandedGuest?._id === guest._id ? "Hide" : "View Collection")}
+                                                        : (expandedGuest?._id === guest._id ? "Hide Collection" : "View Collection")}
                                                 </button>
                                             </td>
                                         </tr>
@@ -606,39 +666,41 @@ export function EventManagementPage() {
                         </div>
                     )}
 
+                    {/* Expandable guest collection editor drawer panel */}
                     {expandedGuest && (
-                        <div className="card" style={{ marginTop: 16, padding: "1.25rem", border: "1px solid var(--accent-glow)" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-                                <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "#fff" }}>
-                                    Collection — {expandedGuest.user?.fullname || expandedGuest.userId?.slice(-8) || "Anonymous"}
+                        <div className="card" style={{ marginTop: "24px", padding: "20px", border: "1px solid var(--hairline)", background: "var(--surface-2)" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: "16px" }}>
+                                <h3 style={{ fontSize: "16px", fontWeight: 500, color: "var(--ink)", margin: 0 }}>
+                                    Editing Matches: {expandedGuest.user?.fullname || expandedGuest.userId?.slice(-8).toUpperCase() || "Anonymous"}
                                 </h3>
-                                <div style={{ display: "flex", gap: 6 }}>
-                                    <button onClick={openAddPhotoModal} className="btn-primary" style={{ padding: "0.35rem 0.75rem", fontSize: "0.75rem" }}>
+                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                    <button onClick={openAddPhotoModal} className="btn btn-primary btn-sm">
                                         + Add Photos
                                     </button>
                                     {selectedGuestPhotos.length > 0 && (
-                                        <button onClick={handleRemoveFromGuestCollection} className="btn-danger" style={{ padding: "0.35rem 0.75rem", fontSize: "0.75rem" }}>
-                                            Remove {selectedGuestPhotos.length}
+                                        <button onClick={handleRemoveFromGuestCollection} className="btn btn-sm" style={{ background: "#be123c", color: "#fff", border: "1px solid #9f1239" }}>
+                                            Remove Selected ({selectedGuestPhotos.length})
                                         </button>
                                     )}
                                 </div>
                             </div>
+                            
                             {guestCollectionLoading ? (
-                                <div style={{ display: "flex", justifyContent: "center", padding: "1.5rem" }}><div className="spinner" /></div>
+                                <div style={{ display: "flex", justifyContent: "center", padding: "24px" }}><div className="spinner" /></div>
                             ) : guestCollectionPhotos.length === 0 ? (
-                                <p style={{ marginTop: 12, fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
-                                    No photos in this guest's collection. Use "Add Photos" to add from the event.
+                                <p style={{ fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>
+                                    No photos in this guest's collection. Click "Add Photos" to link images manually.
                                 </p>
                             ) : (
                                 <>
-                                    <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8 }}>
+                                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 10 }}>
                                         {guestCollectionPhotos.map((p) => {
                                             const isSel = selectedGuestPhotos.includes(p._id);
                                             return (
-                                                <div key={p._id} className="photo-tile" style={{ padding: 4, border: isSel ? "2px solid var(--accent)" : undefined, cursor: "pointer" }}
+                                                <div key={p._id} className="photo-tile" style={{ padding: 4, border: isSel ? "2px solid var(--accent)" : "1px solid var(--hairline)", cursor: "pointer" }}
                                                     onClick={() => setSelectedGuestPhotos((prev) => isSel ? prev.filter((x) => x !== p._id) : [...prev, p._id])}
                                                 >
-                                                    <img src={p.url} alt="" style={{ borderRadius: 6, height: 100 }} />
+                                                    <img src={p.url} alt="" style={{ borderRadius: "var(--r-sm)", height: 80, width: "100%", objectFit: "cover" }} />
                                                 </div>
                                             );
                                         })}
@@ -668,112 +730,126 @@ export function EventManagementPage() {
                     )}
                 </section>
             )}
- 
+
+            {/* Access Control Tab */}
             {activeTab === "access" && (
-                <section className="card" style={{ marginTop: 16, padding: "1.5rem" }}>
-                    <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#fff" }}>Access Level</h2>
-                    <div style={{ marginTop: 16, display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
-                        {(["spot", "browse"] as const).map((level) => (
-                            <label
-                                key={level}
-                                style={{
-                                    display: "block", padding: "1rem", borderRadius: 12, cursor: "pointer",
-                                    border: `1px solid ${event.accessLevel === level ? "var(--accent)" : "var(--border)"}`,
-                                    background: event.accessLevel === level ? "var(--accent-glow)" : "var(--bg-soft)",
-                                    transition: "all 0.15s",
-                                }}
-                            >
-                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                    <input type="radio" checked={event.accessLevel === level} onChange={() => handleAccessChange(level)}
-                                        style={{ accentColor: "var(--accent)" }} />
-                                    <strong style={{ color: "#fff", fontSize: "0.875rem" }}>
-                                        {level === "spot" ? "Spot Only" : "Browse & Spot"}
-                                    </strong>
-                                </div>
-                                <p style={{ marginTop: 6, fontSize: "0.8125rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                                    {level === "spot"
-                                        ? "Guests upload a selfie to find their photos. They cannot browse all event photos."
-                                        : "Guests can browse all photos AND use face spotting to find themselves."}
-                                </p>
-                            </label>
-                        ))}
+                <section className="card card-xl" style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.01)" }}>
+                    <h2 style={{ fontSize: "20px", fontWeight: 500, color: "var(--ink)", margin: "0 0 16px 0" }}>Access Settings</h2>
+                    
+                    <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", marginBottom: "32px" }}>
+                        {(["spot", "browse"] as const).map((level) => {
+                            const isSelected = event.accessLevel === level;
+                            return (
+                                <label
+                                    key={level}
+                                    style={{
+                                        display: "block", padding: "20px", borderRadius: "var(--r-lg)", cursor: "pointer",
+                                        border: `1px solid ${isSelected ? "var(--accent)" : "var(--hairline)"}`,
+                                        background: isSelected ? "var(--surface-2)" : "var(--surface-1)",
+                                        transition: "all 0.15s ease",
+                                    }}
+                                >
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                        <input type="radio" checked={isSelected} onChange={() => handleAccessChange(level)}
+                                            style={{ accentColor: "#ff5600" }} />
+                                        <strong style={{ color: "var(--ink)", fontSize: "16px" }}>
+                                            {level === "spot" ? "Spot Only" : "Browse & Spot"}
+                                        </strong>
+                                    </div>
+                                    <p style={{ marginTop: 8, fontSize: "13px", color: "var(--ink-muted)", lineHeight: 1.5, margin: 0 }}>
+                                        {level === "spot"
+                                            ? "Guests upload selfies to find their matches. General event library is locked and hidden."
+                                            : "Guests can freely scroll the complete event gallery or upload selfies to filter matches."}
+                                    </p>
+                                </label>
+                            );
+                        })}
                     </div>
 
-                    <div style={{ marginTop: 24 }}>
-                        <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "#fff" }}>Guest Link</h3>
+                    <div>
+                        <h3 style={{ fontSize: "16px", fontWeight: 500, color: "var(--ink)", marginBottom: "8px" }}>Public Guest URL</h3>
                         <div style={{
-                            marginTop: 8, padding: "0.75rem 1rem", borderRadius: 10,
-                            border: "1px solid var(--border)", background: "var(--bg)",
-                            fontSize: "0.8125rem", wordBreak: "break-all", color: "var(--accent-hover)",
+                            padding: "12px 16px", borderRadius: "var(--r-md)",
+                            border: "1px solid var(--hairline)", background: "var(--surface-2)",
+                            fontSize: "13px", wordBreak: "break-all", color: "#ff5600",
+                            fontWeight: 500, marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px"
                         }}>
-                            {event.sharableLink}
+                            <MgrIcons.Link />
+                            <span>{event.sharableLink}</span>
                         </div>
-                        <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-                            <button onClick={copyLink} className="btn-secondary" style={{ padding: "0.4rem 0.875rem" }}>
-                                {copiedLink ? "✓ Copied" : "Copy Link"}
+                        <div style={{ display: "flex", gap: 12 }}>
+                            <button onClick={copyLink} className="btn btn-secondary">
+                                {copiedLink ? "✓ Copied" : "Copy Guest Link"}
                             </button>
-                            <a href={event.sharableLink} target="_blank" rel="noreferrer" className="btn-primary" style={{ padding: "0.4rem 0.875rem", textDecoration: "none" }}>
-                                Open
+                            <a href={event.sharableLink} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ textDecoration: "none" }}>
+                                Open Guest View
                             </a>
                         </div>
                     </div>
                 </section>
             )}
 
+            {/* Settings Tab */}
             {activeTab === "settings" && (
-                <section className="card" style={{ marginTop: 16, padding: "1.5rem" }}>
-                    <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#fff" }}>Event Settings</h2>
-                    <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 16, maxWidth: 480 }}>
+                <section className="card card-xl" style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.01)" }}>
+                    <h2 style={{ fontSize: "20px", fontWeight: 500, color: "var(--ink)", margin: "0 0 20px 0" }}>Event Settings</h2>
+                    
+                    <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 480, marginBottom: "40px" }}>
                         <label className="ui-label">
                             Event Name
-                            <input value={settingsName} onChange={(e) => setSettingsName(e.target.value)} className="ui-input" />
+                            <input value={settingsName} onChange={(e) => setSettingsName(e.target.value)} className="ui-input" required />
                         </label>
                         <label className="ui-label">
                             Event Date
-                            <input type="date" value={settingsDate} onChange={(e) => setSettingsDate(e.target.value)} className="ui-input" />
+                            <input type="date" value={settingsDate} onChange={(e) => setSettingsDate(e.target.value)} className="ui-input" required />
                         </label>
-                        <button onClick={saveSettings} disabled={settingsSaving} className="btn-primary" style={{ padding: "0.5rem 1rem", alignSelf: "flex-start" }}>
+                        <button onClick={saveSettings} disabled={settingsSaving} className="btn btn-primary" style={{ alignSelf: "flex-start" }}>
                             {settingsSaving ? "Saving..." : "Save Settings"}
                         </button>
                     </div>
 
                     <div style={{
-                        marginTop: 32, padding: "1.25rem", borderRadius: 12,
-                        border: "1px solid rgba(239,68,68,0.25)", background: "rgba(239,68,68,0.05)",
+                        padding: "24px", borderRadius: "var(--r-lg)",
+                        border: "1px solid rgba(196,28,28,0.2)", background: "rgba(196,28,28,0.01)",
                     }}>
-                        <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "#fca5a5" }}>Danger Zone</h3>
-                        <p style={{ marginTop: 4, fontSize: "0.8125rem", color: "rgba(252,165,165,0.7)", lineHeight: 1.5 }}>
-                            Permanently delete this event, all photos, guest data, and face index.
+                        <h3 style={{ fontSize: "16px", fontWeight: 500, color: "#c41c1c", margin: "0 0 8px 0" }}>Danger Zone</h3>
+                        <p style={{ fontSize: "14px", color: "var(--ink-muted)", lineHeight: 1.5, margin: "0 0 16px 0" }}>
+                            Permanently delete this event. All photographs, biometric indices, and collections will be wiped out.
                         </p>
-                        <button onClick={handleDelete} className="btn-danger" style={{ marginTop: 12, padding: "0.5rem 1rem" }}>
+                        <button onClick={handleDelete} className="btn" style={{ background: "#be123c", color: "#fff", border: "1px solid #9f1239" }}>
                             Delete Event
                         </button>
                     </div>
                 </section>
             )}
 
+        </div>
+
+            {/* Modals and Dialogs - outside animated container to avoid stacking context clip */}
             {addPhotoModal && (
                 <div className="modal-backdrop">
-                    <div className="card" style={{ width: "100%", maxWidth: 640, padding: "1.5rem", maxHeight: "80vh", overflow: "auto" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#fff" }}>Add Photos to Collection</h2>
-                            <button onClick={() => setAddPhotoModal(false)} style={{ background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", fontSize: 18 }}>✕</button>
+                    <div className="card card-xl" style={{ width: "100%", maxWidth: 640, maxHeight: "85vh", overflow: "auto", boxShadow: "0 8px 30px rgba(0,0,0,0.08)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                            <h2 style={{ fontSize: "20px", fontWeight: 500, color: "var(--ink)", margin: 0 }}>Add Photos manually</h2>
+                            <button onClick={() => setAddPhotoModal(false)} style={{ background: "none", border: "none", color: "var(--ink-muted)", cursor: "pointer", fontSize: 18 }}>✕</button>
                         </div>
-                        <p style={{ marginTop: 4, fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
-                            Select photos from the event to add to this guest's collection
+                        <p style={{ fontSize: "14px", color: "var(--ink-muted)", marginBottom: "20px" }}>
+                            Select photos from the event to force-associate them into this guest's collection.
                         </p>
-                        <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 8 }}>
+                        
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 10, marginBottom: "20px" }}>
                             {eventPhotosForAdd.map((p) => {
                                 const isSel = addPhotoSelections.includes(p._id);
                                 return (
-                                    <div key={p._id} className="photo-tile" style={{ padding: 4, cursor: "pointer", border: isSel ? "2px solid var(--accent)" : undefined }}
+                                    <div key={p._id} className="photo-tile" style={{ padding: 4, cursor: "pointer", border: isSel ? "2px solid var(--accent)" : "1px solid var(--hairline)" }}
                                         onClick={() => setAddPhotoSelections((prev) => isSel ? prev.filter((x) => x !== p._id) : [...prev, p._id])}
                                     >
-                                        <img src={p.url} alt="" style={{ borderRadius: 6, height: 80 }} />
+                                        <img src={p.url} alt="" style={{ borderRadius: "var(--r-sm)", height: 80, width: "100%", objectFit: "cover" }} />
                                     </div>
                                 );
                             })}
                         </div>
+                        
                         <Pagination totalItems={totalPhotos} currentPage={addPhotoPage} pageSize={PAGE_SIZE} onPageChange={async (p) => {
                             setAddPhotoPage(p);
                             if (id) {
@@ -781,63 +857,64 @@ export function EventManagementPage() {
                                 setEventPhotosForAdd(res.data);
                             }
                         }} />
-                        <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 8 }}>
-                            <button onClick={() => setAddPhotoModal(false)} className="btn-secondary" style={{ padding: "0.4rem 0.875rem" }}>Cancel</button>
-                            <button onClick={handleAddToGuestCollection} disabled={!addPhotoSelections.length} className="btn-primary" style={{ padding: "0.4rem 0.875rem" }}>
+                        
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: "24px" }}>
+                            <button onClick={() => setAddPhotoModal(false)} className="btn btn-secondary">Cancel</button>
+                            <button onClick={handleAddToGuestCollection} disabled={!addPhotoSelections.length} className="btn btn-primary">
                                 Add {addPhotoSelections.length} Photo(s)
                             </button>
                         </div>
                     </div>
                 </div>
             )}
-            </div>
-
-        {downloadToast && (
-            <div style={{
-                position: "fixed", right: 16, bottom: 16, zIndex: 70,
-                padding: "0.55rem 0.8rem", borderRadius: 10,
-                border: "1px solid rgba(16,185,129,0.3)",
-                background: "rgba(16,185,129,0.12)", color: "#6ee7b7",
-                fontSize: "0.75rem", fontWeight: 600,
-            }}>
-                {downloadToast}
-            </div>
-        )}
 
             {confirmDialog && (
-            <div className="modal-backdrop">
-                <div className="card" style={{ width: "100%", maxWidth: 420, padding: "1.25rem" }}>
-                    <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "#fff" }}>{confirmDialog.title}</h3>
-                    <p style={{ marginTop: 8, fontSize: "0.8125rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                        {confirmDialog.message}
-                    </p>
-                    <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 8 }}>
-                        <button
-                            onClick={() => setConfirmDialog(null)}
-                            className="btn-secondary"
-                            style={{ padding: "0.4rem 0.875rem" }}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={async () => {
-                                const action = confirmDialog.action;
-                                setConfirmDialog(null);
-                                if (action === "delete-selected-photos") {
-                                    await confirmDeleteSelected();
-                                } else {
-                                    await confirmDeleteEvent();
-                                }
-                            }}
-                            className="btn-danger"
-                            style={{ padding: "0.4rem 0.875rem" }}
-                        >
-                            {confirmDialog.confirmLabel}
-                        </button>
+                <div className="modal-backdrop">
+                    <div className="card card-xl" style={{ width: "100%", maxWidth: 440, boxShadow: "0 8px 30px rgba(0,0,0,0.08)" }}>
+                        <h3 style={{ fontSize: "18px", fontWeight: 500, color: "var(--ink)", margin: "0 0 8px 0" }}>{confirmDialog.title}</h3>
+                        <p style={{ fontSize: "14px", color: "var(--ink-muted)", lineHeight: 1.5, margin: "0 0 24px 0" }}>
+                            {confirmDialog.message}
+                        </p>
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+                            <button
+                                onClick={() => setConfirmDialog(null)}
+                                className="btn btn-secondary"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    const action = confirmDialog.action;
+                                    setConfirmDialog(null);
+                                    if (action === "delete-selected-photos") {
+                                        await confirmDeleteSelected();
+                                    } else {
+                                        await confirmDeleteEvent();
+                                    }
+                                }}
+                                className="btn"
+                                style={{ background: "#be123c", color: "#fff", border: "1px solid #9f1239" }}
+                            >
+                                {confirmDialog.confirmLabel}
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        )}
+            )}
+
+            {/* Download toast */}
+            {downloadToast && (
+                <div style={{
+                    position: "fixed", right: 24, bottom: 24, zIndex: 70,
+                    padding: "10px 16px", borderRadius: "var(--r-md)",
+                    border: "1px solid rgba(11,223,80,0.25)",
+                    background: "rgba(11,223,80,0.08)", color: "#0a8a32",
+                    fontSize: "13px", fontWeight: 500,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
+                }}>
+                    {downloadToast}
+                </div>
+            )}
         </>
     );
 }

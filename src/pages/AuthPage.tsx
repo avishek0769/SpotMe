@@ -74,7 +74,7 @@ export function AuthPage({ mode }: AuthPageProps) {
 
     if (checkingSession) {
         return (
-            <div className="page-wrap" style={{ display: "flex", minHeight: "calc(100vh - 60px)", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ display: "flex", minHeight: "calc(100vh - 56px)", alignItems: "center", justifyContent: "center", background: "var(--canvas)" }}>
                 <div className="spinner" />
             </div>
         );
@@ -165,39 +165,39 @@ export function AuthPage({ mode }: AuthPageProps) {
 
     if (showReset) {
         return (
-            <div className="page-wrap" style={{ display: "flex", minHeight: "calc(100vh - 60px)", alignItems: "center", justifyContent: "center" }}>
-                <div className="card" style={{ width: "100%", maxWidth: 420, padding: "2rem" }}>
-                    <p style={{ fontSize: "0.6875rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-secondary)" }}>Reset Password</p>
-                    <h1 style={{ marginTop: 8, fontSize: "1.75rem", fontWeight: 700, color: "#fff" }}>
+            <div style={{ display: "flex", minHeight: "calc(100vh - 56px)", alignItems: "center", justifyContent: "center", background: "var(--canvas)", padding: "24px" }} className="fade-up">
+                <div className="card card-xl" style={{ width: "100%", maxWidth: 420, boxShadow: "0 4px 20px rgba(0,0,0,0.02)" }}>
+                    <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-muted)", marginBottom: "8px" }}>Reset Password</p>
+                    <h1 style={{ fontSize: "28px", fontWeight: 500, color: "var(--ink)", marginBottom: "24px", letterSpacing: "-0.5px" }}>
                         {resetStep === "email" ? "Enter your email" : "Enter code & new password"}
                     </h1>
                     {resetStep === "email" ? (
-                        <form onSubmit={handleResetSend} style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+                        <form onSubmit={handleResetSend} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                             <label className="ui-label">Email
-                                <input type="email" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} className="ui-input" />
+                                <input type="email" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} className="ui-input" required />
                             </label>
                             {error && <div className="alert alert-error">{error}</div>}
                             {info && <div className="alert alert-success">{info}</div>}
-                            <button type="submit" disabled={loading} className="btn-primary" style={{ padding: "0.625rem" }}>
+                            <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: "100%", padding: "10px" }}>
                                 {loading ? "Sending..." : "Send Reset Code"}
                             </button>
                         </form>
                     ) : (
-                        <form onSubmit={handleResetPassword} style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+                        <form onSubmit={handleResetPassword} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                             <label className="ui-label">Reset Code
-                                <input value={resetCode} onChange={(e) => setResetCode(e.target.value)} className="ui-input" />
+                                <input value={resetCode} onChange={(e) => setResetCode(e.target.value)} className="ui-input" required />
                             </label>
                             <label className="ui-label">New Password
-                                <input type="password" value={resetNewPw} onChange={(e) => setResetNewPw(e.target.value)} className="ui-input" />
+                                <input type="password" value={resetNewPw} onChange={(e) => setResetNewPw(e.target.value)} className="ui-input" required />
                             </label>
                             {error && <div className="alert alert-error">{error}</div>}
                             {info && <div className="alert alert-success">{info}</div>}
-                            <button type="submit" disabled={loading} className="btn-primary" style={{ padding: "0.625rem" }}>
+                            <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: "100%", padding: "10px" }}>
                                 {loading ? "Resetting..." : "Reset Password"}
                             </button>
                         </form>
                     )}
-                    <button onClick={() => { setShowReset(false); setError(""); setInfo(""); }} style={{ marginTop: 16, fontSize: "0.8125rem", color: "var(--accent-hover)", background: "none", border: "none", cursor: "pointer" }}>
+                    <button onClick={() => { setShowReset(false); setError(""); setInfo(""); }} style={{ marginTop: 20, fontSize: "14px", color: "#ff5600", background: "none", border: "none", cursor: "pointer", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px" }}>
                         ← Back to login
                     </button>
                 </div>
@@ -206,12 +206,12 @@ export function AuthPage({ mode }: AuthPageProps) {
     }
 
     return (
-        <div className="page-wrap" style={{ display: "flex", minHeight: "calc(100vh - 60px)", alignItems: "center", justifyContent: "center" }}>
-            <div className="card" style={{ width: "100%", maxWidth: 420, padding: "2rem" }}>
-                <p style={{ fontSize: "0.6875rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-secondary)" }}>
+        <div style={{ display: "flex", minHeight: "calc(100vh - 56px)", alignItems: "center", justifyContent: "center", background: "var(--canvas)", padding: "24px" }} className="fade-up">
+            <div className="card card-xl" style={{ width: "100%", maxWidth: 420, boxShadow: "0 4px 20px rgba(0,0,0,0.02)" }}>
+                <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-muted)", marginBottom: "8px" }}>
                     SpotMe
                 </p>
-                <h1 style={{ marginTop: 8, fontSize: "1.75rem", fontWeight: 700, color: "#fff" }}>
+                <h1 style={{ fontSize: "28px", fontWeight: 500, color: "var(--ink)", marginBottom: "24px", letterSpacing: "-0.5px" }}>
                     {isSignup
                         ? signupStep === "email" ? "Create your account"
                         : signupStep === "code" ? "Verify your email"
@@ -221,66 +221,66 @@ export function AuthPage({ mode }: AuthPageProps) {
                 </h1>
 
                 {!isSignup ? (
-                    <form onSubmit={handleLogin} style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+                    <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                         <label className="ui-label">Email
-                            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="ui-input" placeholder="you@example.com" />
+                            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="ui-input" placeholder="you@example.com" required />
                         </label>
                         <label className="ui-label">Password
-                            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="ui-input" placeholder="••••••" />
+                            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="ui-input" placeholder="••••••" required />
                         </label>
                         {error && <div className="alert alert-error">{error}</div>}
-                        <button type="submit" disabled={loading} className="btn-primary" style={{ padding: "0.625rem" }}>
-                            {loading ? <><span className="spinner" style={{ width: 16, height: 16 }} /> Signing in...</> : "Sign In"}
+                        <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: "100%", padding: "10px" }}>
+                            {loading ? "Signing in..." : "Sign In"}
                         </button>
-                        <button type="button" onClick={() => { setShowReset(true); setError(""); }} style={{ fontSize: "0.8125rem", color: "var(--accent-hover)", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+                        <button type="button" onClick={() => { setShowReset(true); setError(""); }} style={{ fontSize: "14px", color: "#ff5600", background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, width: "fit-content", fontWeight: 500 }}>
                             Forgot password?
                         </button>
                     </form>
                 ) : signupStep === "email" ? (
-                    <form onSubmit={handleSendCode} style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+                    <form onSubmit={handleSendCode} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                         <label className="ui-label">Email
-                            <input type="email" value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} className="ui-input" placeholder="you@example.com" />
+                            <input type="email" value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} className="ui-input" placeholder="you@example.com" required />
                         </label>
                         {error && <div className="alert alert-error">{error}</div>}
                         {info && <div className="alert alert-success">{info}</div>}
-                        <button type="submit" disabled={loading} className="btn-primary" style={{ padding: "0.625rem" }}>
+                        <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: "100%", padding: "10px" }}>
                             {loading ? "Sending..." : "Send Verification Code"}
                         </button>
                     </form>
                 ) : signupStep === "code" ? (
-                    <form onSubmit={handleVerifyCode} style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 16 }}>
-                        <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
-                            We sent a code to <strong style={{ color: "#fff" }}>{signupEmail}</strong>
+                    <form onSubmit={handleVerifyCode} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                        <p style={{ fontSize: "14px", color: "var(--ink-muted)", marginBottom: "8px" }}>
+                            We sent a code to <strong style={{ color: "var(--ink)" }}>{signupEmail}</strong>
                         </p>
                         <label className="ui-label">Verification Code
-                            <input value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} className="ui-input" placeholder="12345" />
+                            <input value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} className="ui-input" placeholder="12345" required />
                         </label>
                         {error && <div className="alert alert-error">{error}</div>}
-                        <button type="submit" disabled={loading} className="btn-primary" style={{ padding: "0.625rem" }}>
+                        <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: "100%", padding: "10px" }}>
                             {loading ? "Verifying..." : "Verify Email"}
                         </button>
                     </form>
                 ) : (
-                    <form onSubmit={handleRegister} style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+                    <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                         <label className="ui-label">Full Name
-                            <input value={fullname} onChange={(e) => setFullname(e.target.value)} className="ui-input" placeholder="John Doe" />
+                            <input value={fullname} onChange={(e) => setFullname(e.target.value)} className="ui-input" placeholder="John Doe" required />
                         </label>
                         <label className="ui-label">Username
-                            <input value={username} onChange={(e) => setUsername(e.target.value)} className="ui-input" placeholder="johndoe" />
+                            <input value={username} onChange={(e) => setUsername(e.target.value)} className="ui-input" placeholder="johndoe" required />
                         </label>
                         <label className="ui-label">Password
-                            <input type="password" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} className="ui-input" placeholder="••••••" />
+                            <input type="password" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} className="ui-input" placeholder="••••••" required />
                         </label>
                         {error && <div className="alert alert-error">{error}</div>}
-                        <button type="submit" disabled={loading} className="btn-primary" style={{ padding: "0.625rem" }}>
+                        <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: "100%", padding: "10px" }}>
                             {loading ? "Creating Account..." : "Create Account"}
                         </button>
                     </form>
                 )}
 
-                <p style={{ marginTop: 20, fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
+                <p style={{ marginTop: 24, fontSize: "14px", color: "var(--ink-muted)", borderTop: "1px solid var(--hairline)", paddingTop: "16px" }}>
                     {isSignup ? "Already have an account? " : "Need an account? "}
-                    <Link to={isSignup ? "/login" : "/signup"} style={{ color: "var(--accent-hover)", textDecoration: "none" }}>
+                    <Link to={isSignup ? "/login" : "/signup"} style={{ color: "#ff5600", textDecoration: "none", fontWeight: 500 }}>
                         {isSignup ? "Sign In" : "Sign Up"}
                     </Link>
                 </p>
