@@ -10,13 +10,13 @@ const errorHandler = (err, req, res, next) => {
     console.log(err);
     res.status(statusCode).json({ message });
 };
-
+console.log(process.env.CORS_ORIGIN)
 app.use(
     cors({
-        origin: process.env.CORS_ORIGIN,
-        methods: process.env.CORS_METHODS,
+        origin: process.env.CORS_ORIGIN.split(","),
+        methods: process.env.CORS_METHODS.split(","),
         credentials: true,
-    }),
+    })
 );
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.json());
