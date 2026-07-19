@@ -142,6 +142,8 @@ export function GuestEventPage() {
         );
     }
 
+    const isExpired = event.status === "expired" || new Date(event.expiresAt) < new Date();
+
     function onSelfieChange(e: ChangeEvent<HTMLInputElement>) {
         const files = e.target.files;
         if (!files) return;
@@ -313,13 +315,28 @@ export function GuestEventPage() {
             <section className="card card-xl" style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.01)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: "20px" }}>
                     <h2 style={{ fontSize: "20px", fontWeight: 500, color: "var(--ink)", margin: 0 }}>Find My Photos</h2>
-                    {matchStep !== "select" && matchStep !== "uploading" && matchStep !== "matching" && (
+                    {!isExpired && matchStep !== "select" && matchStep !== "uploading" && matchStep !== "matching" && (
                         <button onClick={resetFlow} className="btn btn-secondary btn-sm">
                             Start Over
                         </button>
                     )}
                 </div>
 
+                {isExpired ? (
+                    <div style={{
+                        padding: "24px",
+                        borderRadius: "var(--r-md)",
+                        border: "1px solid rgba(220, 38, 38, 0.2)",
+                        background: "rgba(220, 38, 38, 0.05)",
+                        textAlign: "center"
+                    }}>
+                        <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#be123c", margin: "0 0 8px 0" }}>Event Expired</h3>
+                        <p style={{ fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>
+                            This event is expired and all the photos have been deleted from our servers.
+                        </p>
+                    </div>
+                ) : (
+                    <>
                 <div style={{
                     padding: "10px 14px", borderRadius: "var(--r-md)",
                     background: "var(--surface-2)", border: "1px solid var(--hairline)",
@@ -488,6 +505,8 @@ export function GuestEventPage() {
                             </div>
                         )}
                     </div>
+                )}
+                    </>
                 )}
             </section>
 

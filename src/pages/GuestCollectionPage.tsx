@@ -168,6 +168,8 @@ export function GuestCollectionPage() {
     if (!user) return <Navigate to={`/event/${id}`} replace />;
     if (notFound || !event) return <Navigate to="/dashboard" replace />;
 
+    const isExpired = event.status === "expired" || new Date(event.expiresAt) < new Date();
+
     function onSelfieChange(e: ChangeEvent<HTMLInputElement>) {
         const files = e.target.files;
         if (!files) return;
@@ -473,175 +475,193 @@ export function GuestCollectionPage() {
                         Signed in as {user.fullname || user.username}
                     </p>
 
-                    <div style={{ marginBottom: "24px" }}>
-                        <p style={{ fontSize: "13px", fontWeight: 500, color: "var(--ink)", marginBottom: "8px" }}>
-                            Current Saved Selfies ({selfies.length} / 3)
-                        </p>
-                        {selfies.length > 0 ? (
-                            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                                {selfies.map((s) => (
-                                    <div key={s._id} className="photo-tile" style={{ padding: 4, position: "relative", width: "90px", height: "90px" }}>
-                                        <img src={s.url} alt="Selfie" style={{ borderRadius: "var(--r-md)", width: "100%", height: "100%", objectFit: "cover" }} />
-                                        <button onClick={() => handleDeleteSelfie(s)} style={{
-                                            position: "absolute", top: 6, right: 6, width: 18, height: 18,
-                                            borderRadius: "50%", background: "rgba(196,28,28,0.95)", border: "none",
-                                            color: "#fff", fontSize: 9, cursor: "pointer",
-                                            display: "flex", alignItems: "center", justifyContent: "center",
-                                        }}>✕</button>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p style={{ fontSize: "13px", color: "var(--ink-muted)", margin: 0 }}>No selfies saved yet.</p>
-                        )}
-                    </div>
-
-                    <div style={{
-                        padding: "10px 14px", borderRadius: "var(--r-md)",
-                        background: "var(--surface-2)", border: "1px solid var(--hairline)",
-                        fontSize: "13px", fontWeight: 500, color: "#ff5600",
-                        marginBottom: "20px", display: "inline-block"
-                    }}>
-                        {stepLabels[matchStep]}
-                    </div>
-
-                    {matchStep === "select" && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                    {isExpired ? (
+                        <div style={{
+                            padding: "24px",
+                            borderRadius: "var(--r-md)",
+                            border: "1px solid rgba(220, 38, 38, 0.2)",
+                            background: "rgba(220, 38, 38, 0.05)",
+                            color: "var(--ink)",
+                            textAlign: "center"
+                        }}>
+                            <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#be123c", margin: "0 0 8px 0" }}>Event Expired</h3>
                             <p style={{ fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>
-                                Select selfies ({3 - selfies.length} remaining slots)
+                                This event is expired and all the photos have been deleted from our servers.
                             </p>
-                            
-                            <div
-                                onClick={() => selfieRef.current?.click()}
-                                style={{
-                                    display: "flex", flexDirection: "column", alignItems: "center",
-                                    justifyContent: "center", gap: "12px",
-                                    padding: "28px 20px",
-                                    border: "2px dashed var(--hairline)",
-                                    borderRadius: "var(--r-lg)",
-                                    background: "var(--surface-2)",
-                                    cursor: "pointer",
-                                    transition: "border-color 0.15s ease, background 0.15s ease",
-                                    maxWidth: "420px",
-                                }}
-                                onMouseEnter={e => {
-                                    e.currentTarget.style.borderColor = "var(--ink-subtle)";
-                                    e.currentTarget.style.background = "var(--surface-1)";
-                                }}
-                                onMouseLeave={e => {
-                                    e.currentTarget.style.borderColor = "var(--hairline)";
-                                    e.currentTarget.style.background = "var(--surface-2)";
-                                }}
-                            >
-                                <div style={{ color: "var(--ink-tertiary)" }}>
-                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                                        <circle cx="12" cy="13" r="4" />
-                                    </svg>
-                                </div>
-                                <div style={{ textAlign: "center" }}>
-                                    <p style={{ fontSize: "14px", color: "var(--ink)", margin: "0 0 2px 0", fontWeight: 500 }}>
-                                        Choose selfie photos
-                                    </p>
-                                    <p style={{ fontSize: "12px", color: "var(--ink-muted)", margin: 0 }}>
-                                        Up to 3 images &middot; JPG, PNG, WEBP
-                                    </p>
-                                </div>
-                                <input
-                                    ref={selfieRef} type="file" multiple accept="image/*"
-                                    onChange={onSelfieChange}
-                                    style={{ display: "none" }}
-                                />
-                            </div>
-
-                            {selfiePreviews.length > 0 && (
-                                <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                                    {selfiePreviews.map((preview, i) => (
-                                        <div key={i} style={{ position: "relative", borderRadius: "var(--r-md)", overflow: "hidden", border: "1px solid var(--hairline)", width: "100px", height: "100px" }}>
-                                            <img src={preview} alt={`Selfie ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                            <button type="button" onClick={() => removeSelfie(i)} style={{
-                                                position: "absolute", top: 4, right: 4, width: 20, height: 20,
-                                                borderRadius: "50%", background: "rgba(196,28,28,0.95)", border: "none",
-                                                color: "#fff", fontSize: 10, cursor: "pointer",
-                                                display: "flex", alignItems: "center", justifyContent: "center",
-                                            }}>✕</button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                                <button onClick={handleUpload} disabled={selfieFiles.length === 0} className="btn btn-primary">
-                                    Upload {selfieFiles.length} Selfie(s)
-                                </button>
-                                {selfies.length > 0 && (
-                                    <button onClick={handleFindMatches} className="btn btn-secondary">
-                                        Scan event using saved selfies
-                                    </button>
-                                )}
-                            </div>
                         </div>
-                    )}
-
-                    {matchStep === "uploading" && (
-                        <div style={{ textAlign: "center", padding: "40px 0" }}>
-                            <div className="spinner" style={{ margin: "0 auto 16px" }} />
-                            <p style={{ fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>Uploading selfies securely...</p>
-                        </div>
-                    )}
-
-                    {matchStep === "uploaded" && (
-                        <div>
-                            <div className="alert alert-success" style={{ marginBottom: "16px" }}>{message}</div>
-                            <p style={{ fontSize: "14px", color: "var(--ink-muted)", marginBottom: "20px" }}>
-                                New selfie uploaded. Click below to discover matches.
-                            </p>
-                            <button onClick={handleFindMatches} className="btn btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
-                                <CollectionIcons.Search /> Scan Gallery
-                            </button>
-                        </div>
-                    )}
-
-                    {matchStep === "matching" && (
-                        <div style={{ textAlign: "center", padding: "40px 0" }}>
-                            <div className="spinner" style={{ margin: "0 auto 16px" }} />
-                            <p style={{ fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>Searching via AI facial vector match...</p>
-                        </div>
-                    )}
-
-                    {matchStep === "done" && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                            <div className="alert alert-success">{message}</div>
-                            {newMatchedPhotos.length > 0 ? (
-                                <>
-                                    <p style={{ fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>
-                                        New photos have been matched and saved to your collection.
-                                    </p>
-                                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 12 }}>
-                                        {newMatchedPhotos.slice(0, 8).map((p) => (
-                                            <div key={p._id} className="photo-tile" style={{ padding: 4 }}>
-                                                <img src={p.url} alt="" style={{ borderRadius: "var(--r-sm)", height: 80, width: "100%", objectFit: "cover" }} />
+                    ) : (
+                        <>
+                            <div style={{ marginBottom: "24px" }}>
+                                <p style={{ fontSize: "13px", fontWeight: 500, color: "var(--ink)", marginBottom: "8px" }}>
+                                    Current Saved Selfies ({selfies.length} / 3)
+                                </p>
+                                {selfies.length > 0 ? (
+                                    <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                                        {selfies.map((s) => (
+                                            <div key={s._id} className="photo-tile" style={{ padding: 4, position: "relative", width: "90px", height: "90px" }}>
+                                                <img src={s.url} alt="Selfie" style={{ borderRadius: "var(--r-md)", width: "100%", height: "100%", objectFit: "cover" }} />
+                                                <button onClick={() => handleDeleteSelfie(s)} style={{
+                                                    position: "absolute", top: 6, right: 6, width: 18, height: 18,
+                                                    borderRadius: "50%", background: "rgba(196,28,28,0.95)", border: "none",
+                                                    color: "#fff", fontSize: 9, cursor: "pointer",
+                                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                                }}>✕</button>
                                             </div>
                                         ))}
                                     </div>
-                                    {newMatchedPhotos.length > 8 && (
-                                        <p style={{ fontSize: "13px", color: "var(--ink-muted)", margin: 0 }}>
-                                            + {newMatchedPhotos.length - 8} more matches
-                                        </p>
-                                    )}
-                                </>
-                            ) : (
-                                <div style={{ textAlign: "center", padding: "24px 0", color: "var(--ink-tertiary)" }}>
-                                    <div style={{ display: "flex", justifyContent: "center", marginBottom: "12px" }}>
-                                        <CollectionIcons.Frown />
+                                ) : (
+                                    <p style={{ fontSize: "13px", color: "var(--ink-muted)", margin: 0 }}>No selfies saved yet.</p>
+                                )}
+                            </div>
+
+                            <div style={{
+                                padding: "10px 14px", borderRadius: "var(--r-md)",
+                                background: "var(--surface-2)", border: "1px solid var(--hairline)",
+                                fontSize: "13px", fontWeight: 500, color: "#ff5600",
+                                marginBottom: "20px", display: "inline-block"
+                            }}>
+                                {stepLabels[matchStep]}
+                            </div>
+
+                            {matchStep === "select" && (
+                                <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                                    <p style={{ fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>
+                                        Select selfies ({3 - selfies.length} remaining slots)
+                                    </p>
+                                    
+                                    <div
+                                        onClick={() => selfieRef.current?.click()}
+                                        style={{
+                                            display: "flex", flexDirection: "column", alignItems: "center",
+                                            justifyContent: "center", gap: "12px",
+                                            padding: "28px 20px",
+                                            border: "2px dashed var(--hairline)",
+                                            borderRadius: "var(--r-lg)",
+                                            background: "var(--surface-2)",
+                                            cursor: "pointer",
+                                            transition: "border-color 0.15s ease, background 0.15s ease",
+                                            maxWidth: "420px",
+                                        }}
+                                        onMouseEnter={e => {
+                                            e.currentTarget.style.borderColor = "var(--ink-subtle)";
+                                            e.currentTarget.style.background = "var(--surface-1)";
+                                        }}
+                                        onMouseLeave={e => {
+                                            e.currentTarget.style.borderColor = "var(--hairline)";
+                                            e.currentTarget.style.background = "var(--surface-2)";
+                                        }}
+                                    >
+                                        <div style={{ color: "var(--ink-tertiary)" }}>
+                                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                                <circle cx="12" cy="13" r="4" />
+                                            </svg>
+                                        </div>
+                                        <div style={{ textAlign: "center" }}>
+                                            <p style={{ fontSize: "14px", color: "var(--ink)", margin: "0 0 2px 0", fontWeight: 500 }}>
+                                                Choose selfie photos
+                                            </p>
+                                            <p style={{ fontSize: "12px", color: "var(--ink-muted)", margin: 0 }}>
+                                                Up to 3 images &middot; JPG, PNG, WEBP
+                                            </p>
+                                        </div>
+                                        <input
+                                            ref={selfieRef} type="file" multiple accept="image/*"
+                                            onChange={onSelfieChange}
+                                            style={{ display: "none" }}
+                                        />
                                     </div>
-                                    <p style={{ fontSize: "15px", color: "var(--ink-muted)", margin: 0 }}>No matches found. Try uploading a clearer selfie.</p>
+
+                                    {selfiePreviews.length > 0 && (
+                                        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                                            {selfiePreviews.map((preview, i) => (
+                                                <div key={i} style={{ position: "relative", borderRadius: "var(--r-md)", overflow: "hidden", border: "1px solid var(--hairline)", width: "100px", height: "100px" }}>
+                                                    <img src={preview} alt={`Selfie ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                                    <button type="button" onClick={() => removeSelfie(i)} style={{
+                                                        position: "absolute", top: 4, right: 4, width: 20, height: 20,
+                                                        borderRadius: "50%", background: "rgba(196,28,28,0.95)", border: "none",
+                                                        color: "#fff", fontSize: 10, cursor: "pointer",
+                                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                                    }}>✕</button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                                        <button onClick={handleUpload} disabled={selfieFiles.length === 0} className="btn btn-primary">
+                                            Upload {selfieFiles.length} Selfie(s)
+                                        </button>
+                                        {selfies.length > 0 && (
+                                            <button onClick={handleFindMatches} className="btn btn-secondary">
+                                                Scan event using saved selfies
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             )}
-                            <button onClick={() => setActiveTab("collection")} className="btn btn-primary" style={{ alignSelf: "flex-start" }}>
-                                View Collection &rarr;
-                            </button>
-                        </div>
+
+                            {matchStep === "uploading" && (
+                                <div style={{ textAlign: "center", padding: "40px 0" }}>
+                                    <div className="spinner" style={{ margin: "0 auto 16px" }} />
+                                    <p style={{ fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>Uploading selfies securely...</p>
+                                </div>
+                            )}
+
+                            {matchStep === "uploaded" && (
+                                <div>
+                                    <div className="alert alert-success" style={{ marginBottom: "16px" }}>{message}</div>
+                                    <p style={{ fontSize: "14px", color: "var(--ink-muted)", marginBottom: "20px" }}>
+                                        New selfie uploaded. Click below to discover matches.
+                                    </p>
+                                    <button onClick={handleFindMatches} className="btn btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                                        <CollectionIcons.Search /> Scan Gallery
+                                    </button>
+                                </div>
+                            )}
+
+                            {matchStep === "matching" && (
+                                <div style={{ textAlign: "center", padding: "40px 0" }}>
+                                    <div className="spinner" style={{ margin: "0 auto 16px" }} />
+                                    <p style={{ fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>Searching via AI facial vector match...</p>
+                                </div>
+                            )}
+
+                            {matchStep === "done" && (
+                                <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                                    <div className="alert alert-success">{message}</div>
+                                    {newMatchedPhotos.length > 0 ? (
+                                        <>
+                                            <p style={{ fontSize: "14px", color: "var(--ink-muted)", margin: 0 }}>
+                                                New photos have been matched and saved to your collection.
+                                            </p>
+                                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 12 }}>
+                                                {newMatchedPhotos.slice(0, 8).map((p) => (
+                                                    <div key={p._id} className="photo-tile" style={{ padding: 4 }}>
+                                                        <img src={p.url} alt="" style={{ borderRadius: "var(--r-sm)", height: 80, width: "100%", objectFit: "cover" }} />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {newMatchedPhotos.length > 8 && (
+                                                <p style={{ fontSize: "13px", color: "var(--ink-muted)", margin: 0 }}>
+                                                    + {newMatchedPhotos.length - 8} more matches
+                                                </p>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <div style={{ textAlign: "center", padding: "24px 0", color: "var(--ink-tertiary)" }}>
+                                            <div style={{ display: "flex", justifyContent: "center", marginBottom: "12px" }}>
+                                                <CollectionIcons.Frown />
+                                            </div>
+                                            <p style={{ fontSize: "15px", color: "var(--ink-muted)", margin: 0 }}>No matches found. Try uploading a clearer selfie.</p>
+                                        </div>
+                                    )}
+                                    <button onClick={() => setActiveTab("collection")} className="btn btn-primary" style={{ alignSelf: "flex-start" }}>
+                                        View Collection &rarr;
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     )}
                 </section>
             )}
