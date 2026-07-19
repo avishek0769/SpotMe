@@ -35,6 +35,10 @@ const eventSchema = new Schema({
         type: Date,
         default: null,
     },
+    secondWarningSentAt: {
+        type: Date,
+        default: null,
+    },
     finalWarningSentAt: {
         type: Date,
         default: null,
